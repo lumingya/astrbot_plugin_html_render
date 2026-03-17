@@ -4,11 +4,13 @@
 import asyncio
 import json
 import os
+import random
 import re
 import sys
 import uuid
 import base64
 from typing import Dict, List, Optional
+from PIL import Image as PILImage
 
 # 将插件目录加入搜索路径，使同目录模块可导入
 _PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -77,8 +79,10 @@ class HtmlRenderPlugin(Star):
         # GIF 配置
         self.gif_duration = config.get("gif_duration", 3.0)
         self.gif_fps = config.get("gif_fps", 15)
-# 背景图缓存（None = 未加载，"" = 无背景图，非空 = data URL）
-        self._bg_data_url: Optional[str] = None
+        # 背景图缓存（按相对路径缓存 data URL 和尺寸）
+        self._bg_asset_cache: Dict[str, tuple[str, tuple[int, int]]] = {}
+        self._bg_image_size: Optional[tuple[int, int]] = None
+        self._bg_round_robin_index = 0
         self._horror_template_pattern = re.compile(
             r"(恐怖|惊悚|诡异|阴森|噩梦|鬼|亡灵|血|病栋|午夜|深夜|低语|尖叫|尸|诅咒|怪谈)"
         )
@@ -90,6 +94,8 @@ class HtmlRenderPlugin(Star):
             os.makedirs(self.IMAGE_CACHE_DIR, exist_ok=True)
             self._cleanup_cache()
             await self.template_mgr.load_templates()
+            self._refresh_template_schema_options()
+            self._require_available_templates()
             self.template_mgr.update_template_id_map()
             await self._ensure_playwright()
             # 预启动浏览器实例（后续渲染复用，避免首次渲染等待）
@@ -97,6 +103,8 @@ class HtmlRenderPlugin(Star):
             logger.info("HTML 渲染插件初始化完成")
         except Exception as e:
             logger.error(f"HTML 渲染插件初始化失败: {e}")
+            if isinstance(e, FileNotFoundError):
+                raise
 
     async def _ensure_playwright(self):
         logger.info("HTML渲染插件: 检查 Playwright 依赖...")
@@ -116,21 +124,47 @@ class HtmlRenderPlugin(Star):
         await close_browser()
         logger.info("HTML 渲染插件已停止")
 
-    def _get_bg_data_url(self) -> str:
-            """读取配置的背景图片并转为 base64 Data URL（结果缓存，首次调用后不再重复读取）"""
-            if self._bg_data_url is not None:
-                return self._bg_data_url
+    def _get_background_image_strategy(self) -> str:
+            strategy = str(self.config.get("background_image_strategy", "fixed") or "fixed").strip().lower()
+            if strategy not in {"fixed", "round_robin", "random"}:
+                return "fixed"
+            return strategy
 
-            bg_config = self.config.get("background_image", "").strip()
+    def _select_background_image(self) -> str:
+            configured_image = str(self.config.get("background_image", "") or "").strip()
+            strategy = self._get_background_image_strategy()
+            available_images = self._get_available_background_images()
+
+            if strategy == "fixed":
+                return configured_image
+
+            if not available_images:
+                return ""
+
+            if strategy == "random":
+                return random.choice(available_images)
+
+            image_path = available_images[self._bg_round_robin_index % len(available_images)]
+            self._bg_round_robin_index += 1
+            return image_path
+
+    def _get_bg_data_url(self) -> str:
+            """按配置选择背景图片并转为 base64 Data URL。"""
+            bg_config = self._select_background_image()
             if not bg_config:
-                self._bg_data_url = ""
+                self._bg_image_size = None
                 return ""
 
             bg_path = os.path.join(_PLUGIN_DIR, bg_config)
             if not os.path.isfile(bg_path):
                 logger.warning(f"[HTML渲染] 背景图片不存在: {bg_path}，将使用默认背景")
-                self._bg_data_url = ""
+                self._bg_image_size = None
                 return ""
+
+            cached_asset = self._bg_asset_cache.get(bg_config)
+            if cached_asset:
+                self._bg_image_size = cached_asset[1]
+                return cached_asset[0]
 
             try:
                 ext = os.path.splitext(bg_path)[1].lower()
@@ -142,15 +176,20 @@ class HtmlRenderPlugin(Star):
                     ".gif": "image/gif",
                 }
                 mime = mime_map.get(ext, "image/png")
+                with PILImage.open(bg_path) as img:
+                    image_size = (max(1, img.width), max(1, img.height))
                 with open(bg_path, "rb") as f:
                     encoded = base64.b64encode(f.read()).decode("utf-8")
-                self._bg_data_url = f"data:{mime};base64,{encoded}"
+                data_url = f"data:{mime};base64,{encoded}"
+                self._bg_asset_cache[bg_config] = (data_url, image_size)
+                self._bg_image_size = image_size
                 logger.info(f"[HTML渲染] 背景图片已加载: {bg_config} ({mime})")
             except Exception as e:
                 logger.warning(f"[HTML渲染] 读取背景图片失败: {e}")
-                self._bg_data_url = ""
+                self._bg_image_size = None
+                return ""
 
-            return self._bg_data_url
+            return data_url
 
     def _inject_math_assets(self, html_content: str) -> str:
             """为包含数学公式的页面注入 MathJax 资源。"""
@@ -219,6 +258,124 @@ window.MathJax = {
 
             return math_assets + html_content
 
+    def _get_background_render_mode(self) -> str:
+            mode = str(self.config.get("background_render_mode", "ambient") or "ambient").strip().lower()
+            if mode not in {"ambient", "watermark"}:
+                return "ambient"
+            return mode
+
+    def _get_background_opacity(self, render_mode: str) -> float:
+            default_opacity = 0.17 if render_mode == "watermark" else 0.22
+            raw_value = self.config.get("background_opacity", default_opacity)
+            try:
+                opacity = float(raw_value)
+            except (TypeError, ValueError):
+                return default_opacity
+            return max(0.0, min(1.0, opacity))
+
+    def _get_background_aspect_ratio(self) -> str:
+            if self._bg_image_size and self._bg_image_size[0] > 0 and self._bg_image_size[1] > 0:
+                return f"{self._bg_image_size[0]} / {self._bg_image_size[1]}"
+            return "1 / 1"
+
+    def _inject_background_image(self, html_content: str, bg_data_url: str, render_mode: str) -> str:
+            """Inject the configured background as a real backdrop layer."""
+            if not bg_data_url or 'id="astrbot-custom-bg-style"' in html_content:
+                return html_content
+
+            aspect_ratio = self._get_background_aspect_ratio()
+            opacity = self._get_background_opacity(render_mode)
+            if render_mode == "watermark":
+                bg_assets = f"""
+<style id="astrbot-custom-bg-style">
+html {{
+  background: transparent !important;
+}}
+body {{
+  position: relative !important;
+  background: transparent !important;
+}}
+.content {{
+  position: relative !important;
+  isolation: isolate !important;
+  z-index: 0;
+}}
+.content::before {{
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: calc(100% + 20px);
+  max-width: calc(100% + 20px);
+  aspect-ratio: {aspect_ratio};
+  height: auto;
+  transform: translateX(-50%) scale(1.015);
+  transform-origin: center top;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("{bg_data_url}");
+  background-size: 100% auto;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: {opacity};
+  filter: saturate(0.92) contrast(0.97);
+  mix-blend-mode: multiply;
+}}
+.content > * {{
+  position: relative;
+  z-index: 1;
+}}
+</style>
+"""
+            else:
+                bg_assets = f"""
+<style id="astrbot-custom-bg-style">
+html {{
+  background: transparent !important;
+}}
+body {{
+  position: relative !important;
+  isolation: isolate !important;
+  background: transparent !important;
+}}
+body::before {{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image: url("{bg_data_url}");
+  background-size: 102% auto;
+  background-position: center top;
+  background-repeat: repeat-y;
+  background-attachment: scroll;
+  opacity: {opacity};
+  filter: blur(6px) saturate(0.95);
+  transform: scale(1.015);
+  transform-origin: center top;
+}}
+body::after {{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.12)),
+    radial-gradient(circle at top, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 55%);
+}}
+body > * {{
+  position: relative;
+  z-index: 1;
+}}
+</style>
+"""
+
+            if "</head>" in html_content:
+                return html_content.replace("</head>", bg_assets + "</head>", 1)
+
+            return bg_assets + html_content
+
     def _cleanup_cache(self, max_age_seconds: int = 300):
         """清理缓存目录中的过期文件"""
         import time
@@ -259,16 +416,152 @@ window.MathJax = {
         except Exception:
             return "default_user"
 
-    def _select_template(self, content: str, specified_template: Optional[str] = None, user_id: Optional[str] = None) -> str:
-        available = self.template_mgr.get_available_templates()
+    def _get_auto_render_min_length(self) -> int:
+        try:
+            return max(0, int(self.config.get("auto_render_min_length", 20)))
+        except Exception:
+            return 20
 
-        if specified_template and specified_template in available:
-            return specified_template
+    def _refresh_template_schema_options(self):
+        schema = getattr(self.config, "schema", None)
+        if not isinstance(schema, dict):
+            return
+
+        templates = self._get_available_templates()
+        template_options = [""] + templates
+
+        field_labels = {
+            "default_template": ["自动使用第一个可用模板"] + templates,
+            "auto_render_template": ["回落到当前默认模板"] + templates,
+            "merged_template": ["回落到当前默认模板"] + templates,
+        }
+
+        for field_name, empty_label in field_labels.items():
+            field_meta = schema.get(field_name)
+            if not isinstance(field_meta, dict):
+                continue
+            field_meta["options"] = template_options
+            field_meta["enum"] = template_options
+            field_meta["labels"] = empty_label
+
+        bg_field_meta = schema.get("background_image")
+        if isinstance(bg_field_meta, dict):
+            background_images = self._get_available_background_images()
+            bg_field_meta["options"] = [""] + background_images
+            bg_field_meta["enum"] = [""] + background_images
+            bg_field_meta["labels"] = ["不使用自定义背景"] + background_images
+
+    def _get_available_templates(self) -> List[str]:
+        getter = getattr(self.template_mgr, "get_available_templates", None)
+        if callable(getter):
+            templates = getter()
+            if isinstance(templates, list):
+                return templates
+        return []
+
+    def _get_available_background_images(self) -> List[str]:
+        image_exts = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+        results: List[str] = []
+
+        for root, _, files in os.walk(_PLUGIN_DIR):
+            for filename in files:
+                if os.path.splitext(filename)[1].lower() not in image_exts:
+                    continue
+                abs_path = os.path.join(root, filename)
+                rel_path = os.path.relpath(abs_path, _PLUGIN_DIR)
+                results.append(rel_path.replace("\\", "/"))
+
+        return sorted(set(results))
+
+    def _require_available_templates(self) -> List[str]:
+        getter = getattr(self.template_mgr, "require_available_templates", None)
+        if callable(getter):
+            return getter()
+
+        templates = self._get_available_templates()
+        if templates:
+            return templates
+
+        template_dir = getattr(self.template_mgr, "TEMPLATE_DIR", os.path.join(_PLUGIN_DIR, "templates"))
+        raise FileNotFoundError(
+            f"未找到任何模板文件，请先在 {template_dir} 中放入至少一个 .html 模板"
+        )
+
+    def _has_template(self, template_name: Optional[str]) -> bool:
+        if not template_name:
+            return False
+
+        checker = getattr(self.template_mgr, "has_template", None)
+        if callable(checker):
+            return bool(checker(template_name))
+
+        return template_name in self._get_available_templates()
+
+    def _should_skip_auto_render(self, text: str) -> bool:
+        """
+        Skip auto-render for short plain replies.
+        Explicit <render> blocks are always honored.
+        """
+        if not text or detect_render_tag(text):
+            return False
+
+        threshold = self._get_auto_render_min_length()
+        if threshold <= 0:
+            return False
+
+        visible_text = re.sub(r"<[^>]+>", "", text)
+        visible_text = re.sub(r"\s+", "", visible_text)
+        return len(visible_text) < threshold
+
+    def _get_configured_template_name(self, key: str) -> Optional[str]:
+        value = self.config.get(key, "")
+        if value is None:
+            return None
+        value = str(value).strip()
+        return value or None
+
+    def _resolve_existing_template(self, template_name: Optional[str], source: str) -> Optional[str]:
+        if not template_name:
+            return None
+        if self._has_template(template_name):
+            return template_name
+        raise ValueError(f"{source} 指向的模板不存在: {template_name}")
+
+    def _get_default_template(self, user_id: Optional[str] = None) -> str:
+        available = self._require_available_templates()
+
+        if user_id:
+            user_template = self.user_default_template.get(user_id)
+            if user_template and self._has_template(user_template):
+                return user_template
+            if user_template:
+                self.user_default_template.pop(user_id, None)
+                logger.warning(
+                    f"[HTML渲染] 用户 {user_id} 的默认模板不存在，已清除失效配置: {user_template}"
+                )
+
+        configured_default = self._get_configured_template_name("default_template")
+        resolved_default = self._resolve_existing_template(
+            configured_default,
+            "default_template",
+        )
+        if resolved_default:
+            return resolved_default
+
+        return available[0]
+
+    def _select_template(self, content: str, specified_template: Optional[str] = None, user_id: Optional[str] = None) -> str:
+        available = self._require_available_templates()
+
+        if specified_template:
+            return self._resolve_existing_template(specified_template, "specified template")
 
         if user_id and user_id in self.user_default_template:
             user_tpl = self.user_default_template[user_id]
             if user_tpl in available:
                 return user_tpl
+            self.user_default_template.pop(user_id, None)
+            logger.warning(f"[HTML渲染] 已移除失效的用户模板配置: {user_tpl}")
 
         if "猩红噩梦" in available and self._horror_template_pattern.search(content):
             return "猩红噩梦"
@@ -280,15 +573,15 @@ window.MathJax = {
                 return "dialogue"
 
         if self.config.get("auto_render_all", False):
-            fallback = self.config.get("auto_render_template", "novel")
-            if fallback in available:
-                return fallback
+            fallback = self._get_configured_template_name("auto_render_template")
+            resolved_fallback = self._resolve_existing_template(
+                fallback,
+                "auto_render_template",
+            )
+            if resolved_fallback:
+                return resolved_fallback
 
-        default = self.config.get("default_template", "card")
-        if default in available:
-            return default
-
-        return "card"
+        return self._get_default_template(user_id)
 
     def _apply_template(self, content: str, template_name: str, is_raw_html: bool = False) -> str:
         """
@@ -333,21 +626,8 @@ window.MathJax = {
             # 注入自定义背景图（转为 base64 内嵌，避免 Playwright 沙箱限制）
             bg_data_url = self._get_bg_data_url()
             if bg_data_url:
-                bg_style = (
-                    '<style>'
-                    'body {'
-                    f'  background-image: url("{bg_data_url}") !important;'
-                    '  background-size: cover !important;'
-                    '  background-position: center !important;'
-                    '  background-repeat: no-repeat !important;'
-                    '  background-attachment: local !important;'
-                    '}'
-                    '</style>'
-                )
-                if '</head>' in full_html:
-                    full_html = full_html.replace('</head>', bg_style + '</head>', 1)
-                else:
-                    full_html = bg_style + full_html
+                bg_render_mode = self._get_background_render_mode()
+                full_html = self._inject_background_image(full_html, bg_data_url, bg_render_mode)
             # GIF 模式始终用 .jpg 作为主输出（JPEG体积远小于PNG，渲染更快）
             filename_base = f"render_{uuid.uuid4().hex[:12]}"
             output_path = os.path.join(self.IMAGE_CACHE_DIR, f"{filename_base}.jpg")
@@ -394,7 +674,7 @@ window.MathJax = {
             logger.error(f"渲染过程异常: {e}")
             import traceback
             logger.error(traceback.format_exc())
-            return None
+            raise
 
     async def _process_text(self, text: str, user_id: Optional[str] = None) -> List:
         components: List = []
@@ -485,22 +765,34 @@ window.MathJax = {
         user_id = self._get_user_id(event)
 
         if not text:
-            tpl = self.user_default_template.get(user_id, self.config.get("default_template", "card"))
+            try:
+                tpl = self._get_default_template(user_id)
+            except Exception as e:
+                yield event.plain_result(f"渲染失败：{e}")
+                return
             text = TemplateManager.get_default_test_content(tpl)
         elif text.strip().lower() == "gif":
             text = TemplateManager.get_gif_test_content()
             logger.info("[HTML渲染] 使用 GIF 弹幕测试内容")
 
         if '<render' in text:
-            comps = await self._process_text(text, user_id)
+            try:
+                comps = await self._process_text(text, user_id)
+            except Exception as e:
+                yield event.plain_result(f"渲染失败：{e}")
+                return
             filtered = [c for c in comps if not (isinstance(c, Plain) and not c.text.strip())]
             if filtered:
                 yield event.chain_result(filtered)
             else:
                 yield event.plain_result("❌ 渲染失败，请检查日志获取详细信息")
         else:
-            tpl = self.user_default_template.get(user_id, self.config.get("default_template", "card"))
-            image = await self._render_content(text, tpl, user_id, False)
+            try:
+                tpl = self._get_default_template(user_id)
+                image = await self._render_content(text, tpl, user_id, False)
+            except Exception as e:
+                yield event.plain_result(f"渲染失败：{e}")
+                return
             if image:
                 yield event.chain_result([image])
             else:
@@ -514,7 +806,16 @@ window.MathJax = {
         arg = parts[1].strip() if len(parts) > 1 else ""
 
         user_id = self._get_user_id(event)
-        current = self.user_default_template.get(user_id, self.config.get("default_template", "card"))
+        try:
+            current = self._get_default_template(user_id)
+        except Exception:
+            current = "未设置"
+        available = self._get_available_templates()
+        if not available:
+            yield event.plain_result(
+                f"渲染失败：未找到任何模板文件，请先在 {self.template_mgr.TEMPLATE_DIR} 中放入至少一个 .html 模板"
+            )
+            return
 
         if not arg:
             yield event.plain_result(
@@ -522,7 +823,7 @@ window.MathJax = {
                 f"━━━━━━━━━━━━━━━━━━\n"
                 f"用法: /切换 <模板名或ID>\n"
                 f"当前模板: {current}\n\n"
-                f"示例:\n  /切换 novel\n  /切换 1\n\n"
+                f"示例:\n  /切换 <模板名>\n  /切换 1\n\n"
                 f"使用 /查看 查看可用模板列表"
             )
             return
@@ -535,7 +836,6 @@ window.MathJax = {
             pass
 
         if not template_name:
-            available = self.template_mgr.get_available_templates()
             if arg in available:
                 template_name = arg
 
@@ -644,7 +944,14 @@ window.MathJax = {
         text = parts[2].strip() if len(parts) > 2 else ""
 
         if not arg:
-            yield event.plain_result("📖 用法: /预览模板 <模板名或ID> [文本]\n示例: /预览模板 novel 晚风穿过旧街，灯火一盏盏亮起来。")
+            yield event.plain_result("📖 用法: /预览模板 <模板名或ID> [文本]\n示例: /预览模板 <模板名> 晚风穿过旧街，灯火一盏盏亮起来。")
+            return
+
+        available = self._get_available_templates()
+        if not available:
+            yield event.plain_result(
+                f"渲染失败：未找到任何模板文件，请先在 {self.template_mgr.TEMPLATE_DIR} 中放入至少一个 .html 模板"
+            )
             return
 
         self.template_mgr.update_template_id_map()
@@ -654,7 +961,7 @@ window.MathJax = {
             template_name = self.template_mgr.template_id_map.get(tid)
         except ValueError:
             pass
-        if not template_name and arg in self.template_mgr.get_available_templates():
+        if not template_name and arg in available:
             template_name = arg
         if not template_name:
             yield event.plain_result(f"❌ 未找到模板: {arg}")
@@ -663,7 +970,11 @@ window.MathJax = {
         user_id = self._get_user_id(event)
         if not text:
             text = TemplateManager.get_default_test_content(template_name)
-        image = await self._render_content(text, template_name, user_id, False)
+        try:
+            image = await self._render_content(text, template_name, user_id, False)
+        except Exception as e:
+            yield event.plain_result(f"渲染失败：{e}")
+            return
         if image:
             yield event.chain_result([Plain(f"🖼️ 模板预览: {template_name}"), image])
         else:
@@ -671,14 +982,17 @@ window.MathJax = {
 
     @filter.command("查看", aliases=["templates"])
     async def cmd_list_templates(self, event: AstrMessageEvent):
-        available = self.template_mgr.get_available_templates()
+        available = self._get_available_templates()
         if not available:
             yield event.plain_result("❌ 当前没有可用的模板")
             return
 
         self.template_mgr.update_template_id_map()
         user_id = self._get_user_id(event)
-        current = self.user_default_template.get(user_id, self.config.get("default_template", "card"))
+        try:
+            current = self._get_default_template(user_id)
+        except Exception:
+            current = "未设置"
 
         lines = ["📋 可用模板列表", "━━━━━━━━━━━━━━━━━━", ""]
         for idx in sorted(self.template_mgr.template_id_map.keys()):
@@ -702,7 +1016,12 @@ window.MathJax = {
         if not self.config.get("inject_prompt", True):
             return
 
-        template_list = ", ".join(self.template_mgr.get_available_templates())
+        available_templates = self._get_available_templates()
+        if not available_templates:
+            return
+
+        template_list = ", ".join(available_templates)
+        example_template = available_templates[0]
 
         instruction = f"""
 ## HTML 渲染功能
@@ -783,7 +1102,7 @@ GIF 示例结构：
 ### 示例
 
 **模式A示例（模板内容）：**
-<render template="novel">
+<render template="{example_template}">
 <scene>月光如水，洒落在寂静的庭院中。</scene>
 
 林晓站在门口，望着眼前的身影，心跳不由得加速起来。
@@ -817,9 +1136,7 @@ GIF 示例结构：
         all_prompts = self.template_mgr.extract_all_builtin_prompts()
         if all_prompts:
             user_id = self._get_user_id(event)
-            current_template = self.user_default_template.get(
-                user_id, self.config.get("default_template", "card")
-            )
+            current_template = self._get_default_template(user_id)
 
             prompt_sections = []
             prompt_sections.append("## 模板专属指令")
@@ -881,13 +1198,26 @@ GIF 示例结构：
 
                 text_to_render = text_to_render.strip()
                 if text_to_render:
-                    comps = await self._process_text(text_to_render, user_id)
+                    if self._should_skip_auto_render(text_to_render):
+                        new_chain.append(Plain(text_to_render))
+                        continue
+                    try:
+                        comps = await self._process_text(text_to_render, user_id)
+                    except Exception as e:
+                        new_chain.append(Plain(f"渲染失败：{e}"))
+                        continue
                     new_chain.extend(comps)
             else:
                 new_chain.append(item)
         result.chain = new_chain
 
         # 手动更新历史记录
+        # 如果其他插件（如 context_undo）设置了 skip_history_save=True，则跳过，
+        # 避免把插件自身的回复（如"已撤回..."）错误保存为 assistant 历史。
+        if event.get_extra("skip_history_save"):
+            logger.debug("[HTML渲染] skip_history_save=True，跳过历史记录保存")
+            return
+
         try:
             conv_mgr = self.context.conversation_manager
             unified_msg_origin = event.unified_msg_origin
@@ -914,10 +1244,26 @@ GIF 示例结构：
                     
                     clean_text = clean_text.strip()
 
-                    # 修复并发重复追加：如果最后一条已经是当前角色的文本，则更新而非盲目堆叠
-                    if history and history[-1].get("role") == "assistant":
+                    # When the core LLM history save has already happened, only
+                    # replace the last assistant text with the rendered version.
+                    has_any_user = any(
+                        isinstance(message, dict) and message.get("role") == "user"
+                        for message in history
+                    )
+                    if history and history[-1].get("role") == "assistant" and has_any_user:
                         history[-1]["content"] = clean_text
                     else:
+                        # Some non-LLM/plugin replies reach html_render without a
+                        # matching user record in conversation history. Preserve the
+                        # current event text first so we do not create assistant-only
+                        # conversations that break undo/indexing logic later.
+                        message_text = (event.message_str or "").strip()
+                        if message_text and (
+                            not history
+                            or history[-1].get("role") != "user"
+                            or str(history[-1].get("content", "")).strip() != message_text
+                        ):
+                            history.append({"role": "user", "content": message_text})
                         history.append({"role": "assistant", "content": clean_text})
                     # --- 替换结束 ---
 

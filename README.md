@@ -1,489 +1,172 @@
-\# AstrBot HTML 渲染插件
+# AstrBot HTML Render Plugin
 
+[![AstrBot](https://img.shields.io/badge/AstrBot-Plugin-blue)](https://github.com/Soulter/AstrBot)
+[![Python](https://img.shields.io/badge/Python-3.9+-green)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
+把 AI 返回的文本、Markdown 或自定义 HTML 渲染成图片发送，支持 GIF、数学公式、模板热更新和自动渲染。
 
-\[!\[AstrBot](https://img.shields.io/badge/AstrBot-Plugin-blue)](https://github.com/Soulter/AstrBot)
+## 功能
 
-\[!\[Python](https://img.shields.io/badge/Python-3.9+-green)](https://www.python.org/)
+- 支持外部 HTML 模板，修改 `templates/*.html` 后重新渲染即可生效
+- 支持 Markdown 渲染，保留普通换行、代码块、列表、引用等结构
+- 支持 LaTeX 数学公式，兼容 `$...$`、`$$...$$`、`\(...\)`、`\[...\]`
+- 支持 `<render gif>` 录制 CSS 动画为 GIF
+- 支持自动渲染全部回复，并可用 `auto_render_min_length` 跳过过短文本
+- 支持按用户切换默认模板
 
-\[!\[License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+## 重要变更
 
+- 插件不再内置任何默认模板，也不会自动生成 `card/dialogue/novel`
+- `templates` 目录里如果没有任何 `.html` 模板，渲染会直接报错
+- `default_template` 和 `auto_render_template` 如果配置了不存在的模板，也会直接报错
+- 仪表盘中的模板配置项会根据 `templates` 目录自动生成下拉选项，不需要手动输入模板名
 
+## 安装
 
-将 AI 返回的文本内容渲染成精美图片发送，支持多种预设模板、GIF 动画、Markdown 语法，让聊天体验更加丰富多彩。
+1. 安装插件到 `data/plugins/astrbot_plugin_html_render`
 
-
-
-\## ✨ 功能特性
-
-
-
-\- 🎨 \*\*多模板支持\*\* - 内置卡片、对话气泡、小说页面三种精美模板
-
-\- 📝 \*\*Markdown 渲染\*\* - 自动解析 Markdown 语法（标题、列表、代码块等）
-
-\- 🎬 \*\*GIF 动画\*\* - 支持将 CSS 动画渲染为 GIF 动图
-
-\- 🔄 \*\*热更新模板\*\* - 修改模板文件后立即生效，无需重启
-
-\- 🤖 \*\*AI 自动触发\*\* - 注入提示词让 AI 自动使用渲染功能
-
-\- 👤 \*\*用户个性化\*\* - 每个用户可设置自己的默认模板
-
-\- 🎯 \*\*智能检测\*\* - 自动识别对话内容并使用对话模板
-
-
-
-\## 📦 安装
-
-
-
-\### 1. 安装插件
-
-
-
-在 AstrBot 管理面板中搜索 `astrbot\_plugin\_html\_render` 并安装，或手动克隆到插件目录：
-
-
+2. 安装依赖：
 
 ```bash
-
-cd data/plugins
-
-git clone https://github.com/你的用户名/astrbot\_plugin\_html\_render.git
-
-```
-
-
-
-\### 2. 安装依赖
-
-
-
-```bash
-
-\# 核心依赖（必需）
-
-pip install playwright
-
+pip install playwright aiohttp mistune Pillow
 playwright install chromium
-
-
-
-\# 可选依赖
-
-pip install Pillow    # GIF 动画支持
-
-pip install mistune   # Markdown 渲染支持
-
 ```
 
+3. 在插件目录准备至少一个模板文件：
 
+```text
+astrbot_plugin_html_render/
+  templates/
+    your_template.html
+```
 
-\## ⚙️ 配置说明
+模板文件中需要包含 `{{content}}` 占位符，例如：
 
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f6f2e9;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      line-height: 1.8;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">{{content}}</div>
+</body>
+</html>
+```
 
-
-在 AstrBot 管理面板中配置插件，或直接编辑配置文件：
-
-
+## 配置示例
 
 ```yaml
+inject_prompt: true
 
-\# 基础配置
+# 模板选择
+default_template: ""               # 不填则自动使用第一个可用模板
+auto_render_template: ""           # 不填则回落到当前默认模板
+auto_dialogue_detection: true
+dialogue_quote_threshold: 1
 
-inject\_prompt: true          # 是否向 AI 注入渲染提示词
+# 渲染参数
+render_width: 600
+render_scale: 2
+enable_markdown: true
+enable_math: true
 
-default\_template: "card"     # 默认模板：card / dialogue / novel
+# 自动渲染
+auto_render_all: true
+auto_render_min_length: 20         # 低于该长度不自动渲染
+enable_auto_detect: true
+preserve_text_for_context: true
 
+# GIF
+gif_duration: 3.0
+gif_fps: 15
+gif_scale: 2
 
-
-\# 渲染参数
-
-render\_width: 600            # 图片宽度（像素）
-
-render\_scale: 2              # 缩放比例（影响清晰度）
-
-
-
-\# GIF 配置
-
-gif\_duration: 3.0            # GIF 动画时长（秒）
-
-gif\_fps: 15                  # GIF 帧率
-
-
-
-\# Markdown 配置
-
-enable\_markdown: true        # 启用 Markdown 渲染
-
-
-
-\# 自动检测配置
-
-auto\_dialogue\_detection: true      # 自动检测对话内容
-
-dialogue\_quote\_pattern: '["''「」『』“”‘’]'  # 对话引号匹配规则（中英文单双引号）
-
-dialogue\_quote\_threshold: 1        # 触发对话模板的引号对数
-
-
-
-\# 自动渲染配置
-
-enable\_auto\_detect: true           # 自动检测 HTML 标签并渲染
-
-auto\_render\_all: true              # 是否渲染所有 AI 回复
-
-auto\_render\_min\_length: 20         # 自动渲染的最小文本长度
-
-auto\_render\_template: "novel"      # 自动渲染使用的模板
-
-preserve\_text\_for\_context: true    # 发送图片时保留文本摘要，避免上下文丢失
-
-
-
-\# 合并渲染配置
-
-auto\_merge\_renders: true           # 检测到 <render> 标签时自动合并整段内容
-
-merged\_template: "novel"           # 合并渲染使用的模板
-
-
-
-\# 背景图片配置
-
-background\_image: ""               # 相对插件目录的背景图路径，如 images/bg.jpg
-
+# 背景图
+background_image: ""
+background_image_strategy: "fixed" # fixed=固定, round_robin=轮询, random=随机
+background_render_mode: "ambient" # ambient=页面氛围背景, watermark=正文内容水印
+background_opacity: 0.17          # 透明度，取值 0-1
 ```
 
+## 使用方式
 
+### 命令
 
-\## 📖 使用方法
+- `/测试 <文本>`：测试当前模板渲染效果
+- `/切换 <模板名或ID>`：切换自己的默认模板
+- `/查看`：查看当前可用模板列表
+- `/预览模板 <模板名或ID> [文本]`：临时预览指定模板
 
+### 手动渲染
 
+````html
+<render template="your_template">
+第一行
+第二行
 
-\### 用户命令
-
-
-
-| 命令 | 说明 | 示例 |
-
-|------|------|------|
-
-| `/测试 <文本>` | 测试渲染效果 | `/测试 你好世界` |
-
-| `/切换 <模板>` | 切换默认模板 | `/切换 novel` 或 `/切换 1` |
-
-| `/查看` | 查看可用模板列表 | `/查看` |
-
-
-
-\### AI 自动渲染
-
-
-
-当 `inject\_prompt` 启用时，AI 会自动学习使用 `<render>` 标签：
-
-
-
+```python
+print("Hello")
 ```
 
-用户：帮我写一首诗
-
-AI：
-
-<render template="novel">
-
-春风拂柳绿丝绦，
-
-夏雨润荷红更娇。
-
-秋月照庭霜满地，
-
-冬雪飘窗梦已遥。
-
+行内公式 $a^2+b^2=c^2$
 </render>
+````
 
-```
-
-
-
-\### 手动触发渲染
-
-
-
-在消息中使用 `<render>` 标签：
-
-
+### GIF 渲染
 
 ```html
-
-<!-- 使用默认模板 -->
-
-<render>
-
-这段文字会被渲染成图片
-
-</render>
-
-
-
-<!-- 指定模板 -->
-
-<render template="dialogue">
-
-"你好啊！"
-
-"你好，很高兴认识你。"
-
-</render>
-
-
-
-<!-- 生成 GIF 动画 -->
-
 <render gif>
-
-<div class="animate">动画内容</div>
-
 <style>
-
-.animate { animation: fade 2s infinite; }
-
-@keyframes fade { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
-
+.bar {
+  width: 120px;
+  height: 12px;
+  border-radius: 999px;
+  background: #ddd;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scaleX(0.6); opacity: 0.4; }
+  50% { transform: scaleX(1); opacity: 1; }
+}
 </style>
-
+<div class="bar"></div>
 </render>
-
-
-
-<!-- 指定模板 + GIF -->
-
-<render template="card" gif>
-
-带动画的卡片
-
-</render>
-
 ```
 
+## Markdown 与公式说明
 
+- Markdown 路径已经修复“代码块导致其它内容换行丢失”的问题
+- 普通单换行会保留下来，不会再因为 fenced code block 挤成一段
+- 数学公式通过前端 MathJax 渲染，需要运行环境能访问 `https://cdn.jsdelivr.net`
 
-\## 🎨 内置模板
+## 背景图说明
 
+- `background_image` 通过配置页下拉框选择插件目录里的图片资源
+- `background_image_strategy` 控制背景图切换策略：`fixed` 使用当前选中的图片，`round_robin` 和 `random` 会在全部可用背景图中切换
+- `background_render_mode: ambient` 会把图片作为页面外层氛围背景，适合做边缘衬底
+- `background_render_mode: watermark` 会把图片压到 `.content` 内容区内部作为正文水印，能绕开大多数模板自带的实底容器
+- `background_opacity` 用来控制背景图透明度，`watermark` 模式通常 `0.10-0.25` 比较合适
 
+## 注意事项
 
-\### 1. Card（卡片）
-
-简洁优雅的卡片样式，适合通用内容展示。
-
-
-
-\### 2. Dialogue（对话）
-
-聊天气泡样式，自动将引号内容转为左右交替的气泡，引号外的内容作为叙事描述。
-
-
-
-\### 3. Novel（小说）
-
-仿书页样式，适合长文本、故事、诗歌等文学内容。
-
-
-
-\## 🔧 自定义模板
-
-
-
-模板文件位于 `data/plugin\_data/astrbot\_plugin\_html\_render/templates/` 目录。
-
-
-
-\### 创建新模板
-
-
-
-1\. 在模板目录创建 `my\_template.html` 文件
-
-2\. 使用 `{{content}}` 占位符标记内容插入位置
-
-3\. 保存后立即可用，无需重启
-
-
-
-\### 模板示例
-
-
-
-```html
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-&nbsp;   <meta charset="UTF-8">
-
-&nbsp;   <style>
-
-&nbsp;       body {
-
-&nbsp;           font-family: "Microsoft YaHei", sans-serif;
-
-&nbsp;           padding: 20px;
-
-&nbsp;           background: linear-gradient(135deg, #667eea, #764ba2);
-
-&nbsp;       }
-
-&nbsp;       .content {
-
-&nbsp;           background: white;
-
-&nbsp;           border-radius: 12px;
-
-&nbsp;           padding: 24px;
-
-&nbsp;           box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-
-&nbsp;       }
-
-&nbsp;   </style>
-
-</head>
-
-<body>
-
-&nbsp;   <div class="content">{{content}}</div>
-
-</body>
-
-</html>
-
-```
-
-
-
-\### 使用自定义模板
-
-
-
-```html
-
-<render template="my\_template">
-
-使用自定义模板渲染的内容
-
-</render>
-
-```
-
-
-
-或通过命令设为默认：
-
-
-
-```
-
-/切换 my\_template
-
-```
-
-
-
-\## 📁 目录结构
-
-
-
-```
-
-data/plugin\_data/astrbot\_plugin\_html\_render/
-
-├── templates/              # 模板目录（可自定义）
-
-│   ├── card.html
-
-│   ├── dialogue.html
-
-│   └── novel.html
-
-└── html\_render\_cache/      # 图片缓存目录（自动生成）
-
-&nbsp;   └── render\_xxx.png
-
-```
-
-
-
-\## ❓ 常见问题
-
-
-
-\### Q: 图片生成失败？
-
-\*\*A:\*\* 检查 Playwright 是否正确安装：
-
-```bash
-
-playwright install chromium
-
-```
-
-
-
-\### Q: 修改模板后没有生效？
-
-\*\*A:\*\* 插件已支持热更新。如果仍无效，请检查：
-
-\- 文件名是否正确（`xxx.html`）
-
-\- 文件编码是否为 UTF-8
-
-\- HTML 语法是否正确
-
-
-
-\### Q: GIF 功能不可用？
-
-\*\*A:\*\* 安装 Pillow：
-
-```bash
-
-pip install Pillow
-
-```
-
-
-
-\### Q: Markdown 没有渲染？
-
-\*\*A:\*\* 安装 mistune：
-
-```bash
-
-pip install mistune
-
-```
-
-
-
-\### Q: 如何让 AI 停止自动使用渲染？
-
-\*\*A:\*\* 在配置中将 `inject\_prompt` 设为 `false`。
-
-
-
-\### Q: 图片太小/太模糊？
-
-\*\*A:\*\* 调整配置：
-
-\- `render\_width`: 增加宽度（如 800）
-
-\- `render\_scale`: 增加缩放比例（如 3）
-
-
+- 没有模板文件时，插件不会再偷偷回退到内置样式
+- 模板文件请统一保存为 UTF-8 编码
+- 如果配置了模板名，文件名必须与配置完全一致，不需要写 `.html`
+- 自定义 HTML 模式下，检测到 `<style>` 后会跳过 Markdown 处理，直接嵌入模板渲染

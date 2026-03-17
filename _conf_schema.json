@@ -3,120 +3,165 @@
         "type": "bool",
         "description": "启用 HTML 自动检测",
         "default": true,
-        "hint": "当检测到 HTML 标签时自动渲染成图片"
+        "hint": "检测到 HTML 标签时自动渲染为图片"
     },
     "inject_prompt": {
         "type": "bool",
-        "description": "注入使用说明到 AI",
+        "description": "向 AI 注入渲染说明",
         "default": true,
-        "hint": "是否在 AI 请求时注入渲染功能的使用说明"
+        "hint": "在 LLM 请求时注入 HTML 渲染使用说明"
     },
     "default_template": {
         "type": "string",
         "description": "默认模板",
-        "default": "card",
-        "hint": "使用 <render> 标签但未指定模板时的默认模板"
+        "default": "",
+        "hint": "未显式指定模板时优先使用的模板文件名，不填时自动使用第一个可用模板"
     },
     "render_width": {
         "type": "int",
         "description": "渲染宽度（像素）",
         "default": 600,
-        "hint": "图片的宽度，建议 400-800"
+        "hint": "建议范围 400-800"
     },
     "render_scale": {
         "type": "int",
         "description": "渲染缩放倍数",
         "default": 2,
-        "hint": "缩放倍数越大图片越清晰，建议 2-3"
+        "hint": "倍数越高越清晰，建议 2-3"
     },
     "auto_dialogue_detection": {
         "type": "bool",
         "description": "自动检测对话内容",
         "default": true,
-        "hint": "当内容包含多个引号对话时，自动使用对话模板"
+        "hint": "检测到明显对话格式时优先使用 dialogue 模板（前提是该模板存在）"
     },
     "dialogue_quote_threshold": {
         "type": "int",
         "description": "对话检测阈值",
         "default": 1,
-        "hint": "内容中包含多少对引号时判定为对话内容"
+        "hint": "内容中至少出现多少组引号时判定为对话"
     },
     "dialogue_quote_pattern": {
-    "type": "string",
-    "description": "对话引号匹配模式",
-    "default": "[\"''「」『』“”‘’]",
-    "hint": "包含中英文单双引号及直角引号的正则表达式"
-},
+        "type": "string",
+        "description": "对话引号匹配模式",
+        "default": "[\"''銆屻€嶃€庛€忊€溾€濃€樷€橾",
+        "hint": "用于识别中英文单双引号的正则表达式"
+    },
     "auto_merge_renders": {
         "type": "bool",
         "description": "自动合并整段内容",
         "default": true,
-        "hint": "当检测到 <render> 标签时，自动将整段内容合并渲染成一张完整图片"
+        "hint": "检测到 <render> 标签时自动合并整段内容进行渲染"
     },
     "merged_template": {
         "type": "string",
-        "description": "合并时使用的模板",
-        "default": "novel",
-        "hint": "自动合并时使用的默认模板"
+        "description": "合并渲染模板",
+        "default": "",
+        "hint": "自动合并渲染时使用的模板文件名，不填时走当前默认模板"
     },
     "enable_markdown": {
         "type": "bool",
         "description": "启用 Markdown 渲染",
         "default": true,
-        "hint": "自动将 Markdown 格式转换为 HTML 样式"
+        "hint": "支持标题、列表、引用、代码块等 Markdown 语法"
     },
     "enable_math": {
         "type": "bool",
-        "description": "鍚敤 LaTeX 鏁板鍏紡娓叉煋",
+        "description": "启用 LaTeX 数学公式渲染",
         "default": true,
-        "hint": "鏀寔 $...$銆?$$...$$銆?\\\\(...\\\\) 鍜?\\\\[...\\\\] 绛夋暟瀛﹀叕寮?"
+        "hint": "支持 $...$、$$...$$、\\(...\\)、\\[...\\] 以及部分 begin/end 环境"
     },
     "auto_render_all": {
         "type": "bool",
         "description": "自动渲染所有 LLM 回复",
         "default": true,
-        "hint": "即使 AI 没有使用 <render> 标签，也自动将回复渲染成图片。包含对话自动用对话模板，纯文本用小说模板"
+        "hint": "即使没有 <render> 标签，也会尝试把回复渲染成图片"
     },
     "auto_render_template": {
         "type": "string",
-        "description": "自动渲染时的默认模板",
-        "default": "novel",
-        "hint": "当没有检测到对话时使用的模板：novel（小说页面）、card（卡片）"
+        "description": "自动渲染模板",
+        "default": "",
+        "hint": "自动渲染普通文本时优先使用的模板文件名，不填时走当前默认模板"
     },
     "auto_render_min_length": {
         "type": "int",
         "description": "自动渲染最小文本长度",
         "default": 20,
-        "hint": "文本长度小于此值时不自动渲染，避免渲染过短的回复"
+        "hint": "文本长度低于该值时不自动渲染；显式 <render> 不受影响"
     },
     "preserve_text_for_context": {
         "type": "bool",
         "description": "保留文本用于上下文",
         "default": true,
-        "hint": "渲染图片时同时保留文本摘要，确保对话历史和 AI 记忆功能正常工作。关闭后只发送图片，AI 可能无法记住之前的对话内容"
+        "hint": "发送图片时仍保留文本摘要，避免上下文和记忆丢失"
     },
     "gif_duration": {
         "type": "float",
-        "description": "GIF 动画录制时长（秒）",
+        "description": "GIF 录制时长（秒）",
         "default": 3.0,
-        "hint": "使用 <render gif> 时录制动画的时长，建议 2-5 秒"
+        "hint": "建议范围 2-5 秒"
     },
     "gif_fps": {
         "type": "int",
         "description": "GIF 帧率",
         "default": 15,
-        "hint": "每秒帧数，越高越流畅但文件越大。建议 10-20，推荐 15"
+        "hint": "建议范围 10-20"
     },
-"gif_scale": {
+    "gif_scale": {
         "type": "int",
         "description": "GIF 渲染缩放倍数",
         "default": 2,
-        "hint": "GIF 动画的缩放倍数。启用智能裁切后可保持 2 而不影响速度，建议 1-3"
+        "hint": "建议范围 1-3"
     },
     "background_image": {
         "type": "string",
         "description": "自定义背景图片",
         "default": "",
-        "hint": "相对插件目录的路径，如 images/bg.jpg。支持 jpg/png/webp/gif，留空使用默认背景"
+        "hint": "从下拉框选择插件目录内的图片资源"
+    },
+    "background_image_strategy": {
+        "type": "string",
+        "description": "背景图切换策略",
+        "default": "fixed",
+        "hint": "固定使用下拉框选中的图片，或在全部可用背景图中轮询/随机切换",
+        "options": [
+            "fixed",
+            "round_robin",
+            "random"
+        ],
+        "enum": [
+            "fixed",
+            "round_robin",
+            "random"
+        ],
+        "labels": [
+            "固定",
+            "轮询",
+            "随机"
+        ]
+    },
+    "background_render_mode": {
+        "type": "string",
+        "description": "背景图呈现方式",
+        "default": "ambient",
+        "hint": "页面氛围背景铺在页面底层，正文内容水印铺在内容区内部",
+        "options": [
+            "ambient",
+            "watermark"
+        ],
+        "enum": [
+            "ambient",
+            "watermark"
+        ],
+        "labels": [
+            "页面氛围背景",
+            "正文内容水印"
+        ]
+    },
+    "background_opacity": {
+        "type": "float",
+        "description": "背景图透明度",
+        "default": 0.17,
+        "hint": "取值范围 0-1；watermark 模式建议 0.10-0.25，ambient 模式建议 0.15-0.30"
     }
 }
