@@ -1,0 +1,783 @@
+<!--BUILTIN_PROMPT
+优先使用奶油蝴蝶结模板。
+
+这个模板适合甜美、温柔、少女心、日记感、陪伴感、轻小说片段这类内容。
+普通正文直接写即可，不需要所有文字都包标签。
+
+在这个模板中，推荐使用以下语义标签：
+- <q>对话内容</q>：用于台词、引用式短句，会显示成粉色糖霜感对话标签
+- <inner>心声</inner>：用于内心活动、OS、悄悄话，会显示成紫粉色轻胶囊标签
+- <act>动作</act>：用于动作描写、小细节，会显示成波浪下划线强调
+- <scene>场景描述</scene>：用于环境、氛围、画面描写，会显示成独立卡片
+- <aside>旁白或注释</aside>：用于收尾句、旁白、小提示，会显示成居中圆角条
+
+标题、列表、引用、代码块、表格都可以正常使用 Markdown：
+- # 一级标题
+- ## 二级标题
+- > 引用
+- ``` 代码块
+- - 列表
+
+推荐示例：
+<render template="奶油蝴蝶结">
+# 今天的小心情
+这是普通正文，可以直接写叙述内容。
+
+<q>今天要不要一起去看樱花？</q>
+<inner>其实她从早上就在期待这句话。</inner>
+<act>她轻轻整理了一下袖口</act>
+<scene>窗边的光落在缎带和纸盒上，空气里像有很淡的草莓奶油香气。</scene>
+<aside>这一句适合做旁白、总结或收尾。</aside>
+</render>
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;500;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --page-width: 548px;
+      --bg-cream: #fff7fb;
+      --bg-pink: #ffe4ef;
+      --bg-rose: #ffd2e4;
+      --bg-peach: #ffe9dd;
+      --panel: rgba(255, 252, 254, 0.96);
+      --panel-soft: rgba(255, 246, 250, 0.94);
+      --glass: rgba(255, 255, 255, 0.78);
+      --ink: #6c4a5f;
+      --ink-soft: #947184;
+      --pink: #f39ab6;
+      --pink-deep: #de7699;
+      --berry: #d36287;
+      --lavender: #d6c4f8;
+      --cream: #fff5d9;
+      --mint: #d8f0e7;
+      --line: rgba(222, 118, 153, 0.18);
+      --line-soft: rgba(222, 118, 153, 0.09);
+      --shadow: rgba(209, 120, 151, 0.18);
+      --shadow-deep: rgba(176, 95, 129, 0.24);
+      --font-display: "ZCOOL KuaiLe", "Ma Shan Zheng", cursive;
+      --font-body: "Noto Serif SC", "Songti SC", "STSong", serif;
+      --font-ui: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      padding: 34px;
+      display: inline-block;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.8), transparent 22%),
+        radial-gradient(circle at 84% 18%, rgba(243, 154, 182, 0.28), transparent 23%),
+        radial-gradient(circle at 18% 86%, rgba(214, 196, 248, 0.22), transparent 26%),
+        linear-gradient(135deg, #fff8fb 0%, #fff0f6 32%, #ffe9f1 68%, #fff3ea 100%);
+    }
+
+    .frame {
+      width: var(--page-width);
+      max-width: var(--page-width);
+      position: relative;
+      padding: 14px;
+      border-radius: 34px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.2)),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 237, 244, 0.48));
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 24px 52px var(--shadow),
+        0 2px 0 rgba(255, 255, 255, 0.7) inset;
+    }
+
+    .frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 18px 18px, rgba(243, 154, 182, 0.16) 1.2px, transparent 1.2px),
+        linear-gradient(90deg, rgba(243, 154, 182, 0.06) 1px, transparent 1px),
+        linear-gradient(rgba(243, 154, 182, 0.06) 1px, transparent 1px);
+      background-size: 26px 26px, 26px 26px, 26px 26px;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 252, 254, 0.76)),
+        linear-gradient(135deg, var(--panel), var(--panel-soft));
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow:
+        0 22px 48px var(--shadow-deep),
+        0 1px 0 rgba(255, 255, 255, 0.88) inset;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(243, 154, 182, 0.16);
+      pointer-events: none;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 22%),
+        radial-gradient(circle at bottom right, rgba(255, 236, 223, 0.52), transparent 22%);
+      pointer-events: none;
+    }
+
+    .top-ornament {
+      position: relative;
+      height: 108px;
+      margin: 0 28px;
+    }
+
+    .pearl-line {
+      position: absolute;
+      top: 24px;
+      left: 34px;
+      right: 34px;
+      height: 14px;
+      background:
+        radial-gradient(circle at 7px 7px, rgba(255, 255, 255, 0.98) 0 4px, rgba(233, 193, 212, 0.82) 4.5px, transparent 5px);
+      background-size: 18px 14px;
+      opacity: 0.95;
+      pointer-events: none;
+    }
+
+    .heart {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: rgba(243, 154, 182, 0.18);
+      transform: rotate(45deg);
+      border-radius: 3px;
+      pointer-events: none;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: inherit;
+    }
+
+    .heart::before {
+      left: -7px;
+    }
+
+    .heart::after {
+      top: -7px;
+    }
+
+    .heart-a {
+      top: 48px;
+      left: 40px;
+    }
+
+    .heart-b {
+      top: 52px;
+      right: 44px;
+      transform: rotate(45deg) scale(0.9);
+      background: rgba(214, 196, 248, 0.2);
+    }
+
+    .bow {
+      position: absolute;
+      left: 50%;
+      top: 26px;
+      width: 124px;
+      height: 66px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      filter: drop-shadow(0 8px 14px rgba(219, 116, 149, 0.14));
+    }
+
+    .bow-center {
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      width: 26px;
+      height: 30px;
+      transform: translateX(-50%);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff3f8, #f4b6cb);
+      border: 1px solid rgba(222, 118, 153, 0.24);
+      z-index: 3;
+    }
+
+    .bow-loop {
+      position: absolute;
+      top: 8px;
+      width: 48px;
+      height: 38px;
+      background: linear-gradient(135deg, #ffe8f1, #f7b8cb 72%);
+      border: 1px solid rgba(222, 118, 153, 0.22);
+      z-index: 2;
+    }
+
+    .bow-loop.left {
+      left: 16px;
+      border-radius: 18px 26px 18px 26px;
+      transform: rotate(-10deg);
+    }
+
+    .bow-loop.right {
+      right: 16px;
+      border-radius: 26px 18px 26px 18px;
+      transform: rotate(10deg);
+    }
+
+    .bow-tail {
+      position: absolute;
+      top: 34px;
+      width: 24px;
+      height: 28px;
+      background: linear-gradient(180deg, #ffdbe8, #f4a8c3);
+      border: 1px solid rgba(222, 118, 153, 0.2);
+      z-index: 1;
+    }
+
+    .bow-tail.left {
+      left: 42px;
+      clip-path: polygon(0 0, 100% 0, 84% 100%, 48% 78%, 14% 100%);
+      transform: rotate(8deg);
+    }
+
+    .bow-tail.right {
+      right: 42px;
+      clip-path: polygon(0 0, 100% 0, 86% 100%, 52% 78%, 16% 100%);
+      transform: rotate(-8deg);
+    }
+
+    .lace {
+      position: relative;
+      height: 20px;
+      margin: 0 34px;
+    }
+
+    .lace::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 9px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(243, 154, 182, 0.4), transparent);
+    }
+
+    .lace::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 20px;
+      background:
+        radial-gradient(circle at 10px 0, transparent 10px, rgba(243, 154, 182, 0.18) 10px, rgba(243, 154, 182, 0.18) 11px, transparent 11px);
+      background-size: 20px 20px;
+      opacity: 0.8;
+    }
+
+    .content-wrap {
+      position: relative;
+      padding: 18px 36px 32px;
+      z-index: 1;
+    }
+
+    .content {
+      width: 100%;
+      max-width: 100%;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 2.06;
+    }
+
+    .content,
+    .content * {
+      max-width: 100% !important;
+      word-wrap: break-word !important;
+      word-break: break-word !important;
+      overflow-wrap: anywhere !important;
+      box-sizing: border-box !important;
+    }
+
+    .content p {
+      margin-bottom: 1em;
+      text-indent: 2em;
+    }
+
+    .content p:first-child {
+      text-indent: 0;
+    }
+
+    .content p:first-child::first-letter {
+      float: left;
+      margin: 7px 9px 0 0;
+      font-family: var(--font-display);
+      font-size: 3em;
+      line-height: 0.92;
+      color: var(--pink-deep);
+      text-shadow: 0 6px 12px rgba(222, 118, 153, 0.14);
+    }
+
+    .content h1,
+    .content h2,
+    .content h3,
+    .content h4 {
+      text-indent: 0;
+      line-height: 1.35;
+      margin: 1.35em 0 0.72em;
+    }
+
+    .content h1 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--pink-deep);
+      padding-bottom: 10px;
+      border-bottom: 2px dashed rgba(243, 154, 182, 0.34);
+    }
+
+    .content h2 {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: 23px;
+      color: #c96b8c;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 234, 243, 0.96), rgba(255, 241, 219, 0.88));
+      box-shadow: 0 8px 16px rgba(243, 154, 182, 0.1);
+    }
+
+    .content h3 {
+      font-family: var(--font-ui);
+      font-size: 18px;
+      font-weight: 700;
+      color: #b76280;
+      padding-left: 12px;
+      border-left: 4px solid rgba(243, 154, 182, 0.6);
+    }
+
+    .content h4 {
+      font-family: var(--font-ui);
+      font-size: 16px;
+      font-weight: 700;
+      color: #926786;
+    }
+
+    .content strong {
+      color: #c65f83;
+      background: linear-gradient(transparent 56%, rgba(243, 154, 182, 0.2) 56%);
+      padding: 0 2px;
+    }
+
+    .content em {
+      color: #9270a5;
+      font-style: italic;
+    }
+
+    .content a {
+      color: #c06086;
+      text-decoration-color: rgba(192, 96, 134, 0.32);
+      text-underline-offset: 3px;
+    }
+
+    q {
+      display: inline;
+      quotes: none;
+      font-style: normal;
+      color: #bf5f7f;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 241, 246, 0.96), rgba(255, 235, 220, 0.92));
+      border: 1px solid rgba(243, 154, 182, 0.16);
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+
+    q::before {
+      content: "“";
+      color: var(--pink);
+    }
+
+    q::after {
+      content: "”";
+      color: var(--pink);
+    }
+
+    inner {
+      display: inline;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(244, 236, 255, 0.94), rgba(236, 249, 244, 0.88));
+      color: #8b73a8;
+      font-style: italic;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+
+    inner::before {
+      content: "✦ ";
+      color: #c8a7ef;
+    }
+
+    act {
+      display: inline;
+      color: #c36a8a;
+      text-decoration: underline;
+      text-decoration-color: rgba(243, 154, 182, 0.38);
+      text-decoration-style: wavy;
+      text-underline-offset: 4px;
+    }
+
+    scene {
+      display: block;
+      margin: 1.25em 0;
+      padding: 18px 18px 16px;
+      border-radius: 22px;
+      border: 1px solid rgba(243, 154, 182, 0.15);
+      border-left: 6px solid rgba(243, 154, 182, 0.4);
+      background:
+        linear-gradient(135deg, rgba(255, 247, 251, 0.98), rgba(255, 239, 227, 0.82));
+      box-shadow: 0 14px 24px rgba(235, 183, 203, 0.12);
+      color: #8a6780;
+      text-indent: 0;
+      position: relative;
+    }
+
+    scene::before {
+      content: "";
+      position: absolute;
+      right: 16px;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(243, 154, 182, 0.72), rgba(214, 196, 248, 0.72));
+      box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.82);
+    }
+
+    aside {
+      display: block;
+      margin: 1.4em auto;
+      width: fit-content;
+      max-width: 88%;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(243, 154, 182, 0.12);
+      box-shadow: 0 10px 18px rgba(238, 200, 216, 0.1);
+      color: var(--ink-soft);
+      text-indent: 0;
+      text-align: center;
+      font-style: italic;
+    }
+
+    .content blockquote {
+      margin: 1.25em 0;
+      padding: 18px 20px 18px 24px;
+      border-radius: 20px;
+      border: 1px solid rgba(243, 154, 182, 0.14);
+      background:
+        linear-gradient(135deg, rgba(255, 247, 250, 0.98), rgba(255, 242, 231, 0.92));
+      color: #8b6478;
+      box-shadow: 0 14px 24px rgba(238, 200, 216, 0.12);
+      text-indent: 0;
+      position: relative;
+    }
+
+    .content blockquote::before {
+      content: "❝";
+      position: absolute;
+      left: 14px;
+      top: 8px;
+      font-size: 28px;
+      color: rgba(243, 154, 182, 0.42);
+      line-height: 1;
+    }
+
+    .content ul,
+    .content ol {
+      margin: 1em 0;
+      padding-left: 1.5em;
+    }
+
+    .content li {
+      margin: 0.45em 0;
+    }
+
+    .content ul li::marker {
+      color: var(--pink-deep);
+    }
+
+    .content ol li::marker {
+      color: #bc7ab0;
+      font-weight: 700;
+    }
+
+    .content hr {
+      margin: 1.7em 0;
+      border: none;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(243, 154, 182, 0.35), transparent);
+    }
+
+    .content code {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(243, 154, 182, 0.12);
+      color: #b85c7e;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92em;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+    }
+
+    .content pre {
+      margin: 1.2em 0;
+      padding: 18px 20px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #7e5870, #5f4255);
+      color: #fff4fb;
+      box-shadow: 0 18px 28px rgba(112, 74, 96, 0.22);
+      overflow-x: auto;
+      text-indent: 0;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      position: relative;
+    }
+
+    .content pre::before {
+      content: "";
+      position: absolute;
+      top: 11px;
+      left: 16px;
+      width: 34px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ffd3e1, #ffe8bf, #d9c4f8);
+      opacity: 0.9;
+    }
+
+    .content pre code {
+      padding: 0;
+      background: none;
+      color: inherit;
+      border-radius: 0;
+      white-space: inherit !important;
+      word-break: inherit !important;
+    }
+
+    .content table {
+      width: 100%;
+      margin: 1.25em 0;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      overflow: hidden;
+      border-radius: 20px;
+      border: 1px solid rgba(243, 154, 182, 0.16);
+      box-shadow: 0 14px 24px rgba(238, 200, 216, 0.12);
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .content th,
+    .content td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(243, 154, 182, 0.08);
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .content th {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: #b85f81;
+      background: linear-gradient(135deg, rgba(255, 235, 243, 0.98), rgba(255, 244, 223, 0.88));
+    }
+
+    .content tr:nth-child(odd) td {
+      background: rgba(255, 251, 253, 0.88);
+    }
+
+    .content tr:nth-child(even) td {
+      background: rgba(255, 246, 250, 0.78);
+    }
+
+    .content details {
+      margin: 1.25em 0;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(243, 154, 182, 0.15);
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 14px 24px rgba(238, 200, 216, 0.1);
+    }
+
+    .content summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      color: #bb6284;
+      text-indent: 0;
+      background: linear-gradient(135deg, rgba(255, 240, 245, 0.96), rgba(255, 247, 228, 0.88));
+      user-select: none;
+    }
+
+    .content summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .content summary::before {
+      content: "+";
+      width: 22px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.84);
+      color: #cf7396;
+      flex-shrink: 0;
+      box-shadow: 0 4px 8px rgba(243, 154, 182, 0.12);
+    }
+
+    .content details[open] summary::before {
+      content: "−";
+    }
+
+    .content details > *:not(summary) {
+      padding: 16px 18px;
+    }
+
+    .content details p {
+      text-indent: 0;
+    }
+
+    .content img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0.9em auto;
+      border-radius: 18px;
+      border: 4px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 18px 28px rgba(238, 200, 216, 0.18);
+    }
+
+    .bottom-ornament {
+      position: relative;
+      height: 54px;
+      margin: 0 34px 18px;
+    }
+
+    .ribbon-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 26px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(243, 154, 182, 0.1), rgba(243, 154, 182, 0.34), rgba(214, 196, 248, 0.3), rgba(243, 154, 182, 0.1));
+    }
+
+    .mini-bow {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 42px;
+      height: 28px;
+      transform: translateX(-50%);
+    }
+
+    .mini-bow::before,
+    .mini-bow::after {
+      content: "";
+      position: absolute;
+      top: 5px;
+      width: 16px;
+      height: 14px;
+      background: linear-gradient(135deg, #ffe4ef, #f5b2c8);
+      border: 1px solid rgba(222, 118, 153, 0.18);
+    }
+
+    .mini-bow::before {
+      left: 2px;
+      border-radius: 12px 10px 12px 10px;
+      transform: rotate(-12deg);
+    }
+
+    .mini-bow::after {
+      right: 2px;
+      border-radius: 10px 12px 10px 12px;
+      transform: rotate(12deg);
+    }
+
+    .mini-bow span {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      width: 10px;
+      height: 12px;
+      transform: translateX(-50%);
+      border-radius: 10px;
+      background: linear-gradient(180deg, #fff2f8, #efabc4);
+      border: 1px solid rgba(222, 118, 153, 0.18);
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="card">
+      <div class="top-ornament">
+        <div class="pearl-line"></div>
+        <div class="heart heart-a"></div>
+        <div class="heart heart-b"></div>
+        <div class="bow">
+          <div class="bow-tail left"></div>
+          <div class="bow-tail right"></div>
+          <div class="bow-loop left"></div>
+          <div class="bow-loop right"></div>
+          <div class="bow-center"></div>
+        </div>
+      </div>
+
+      <div class="lace"></div>
+
+      <div class="content-wrap">
+        <div class="content">{{content}}</div>
+      </div>
+
+      <div class="bottom-ornament">
+        <div class="ribbon-line"></div>
+        <div class="mini-bow"><span></span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -753,6 +753,10 @@ body > * {{
             return False
         return detect_html_tags(text)
 
+    def _has_explicit_render_request(self, text: str) -> bool:
+        has_render_tag = bool(detect_render_tag(text))
+        return has_render_tag or self._detect_should_render(text, has_render_tag)
+
     # ==================== 命令 ====================
 
     @filter.command("测试", aliases=["test"])
@@ -1168,6 +1172,8 @@ GIF 示例结构：
         if not result or not result.chain:
             return
 
+        is_llm_result = result.is_llm_result() if hasattr(result, "is_llm_result") else False
+        has_existing_images = any(isinstance(item, Image) for item in result.chain)
         original_text = event.get_extra("html_render_original_text")
 
         # 回退机制：当其他插件（如主动消息插件）绕过标准 LLM 链路时，
@@ -1180,6 +1186,14 @@ GIF 示例结构：
                     plain_texts.append(item.text)
             if not plain_texts:
                 return
+            if not is_llm_result:
+                has_explicit_render = any(
+                    self._has_explicit_render_request(text)
+                    for text in plain_texts
+                    if text and text.strip()
+                )
+                if not has_explicit_render:
+                    return
             original_text = "\n".join(plain_texts)
             logger.debug("[HTML渲染] 未找到 original_text extra，从消息链中提取文本进行渲染")
 
@@ -1198,6 +1212,13 @@ GIF 示例结构：
 
                 text_to_render = text_to_render.strip()
                 if text_to_render:
+                    has_explicit_render = self._has_explicit_render_request(text_to_render)
+                    if has_existing_images and not has_explicit_render:
+                        new_chain.append(Plain(text_to_render))
+                        continue
+                    if not is_llm_result and not has_explicit_render:
+                        new_chain.append(Plain(text_to_render))
+                        continue
                     if self._should_skip_auto_render(text_to_render):
                         new_chain.append(Plain(text_to_render))
                         continue
@@ -1210,6 +1231,9 @@ GIF 示例结构：
             else:
                 new_chain.append(item)
         result.chain = new_chain
+
+        if not is_llm_result:
+            return
 
         # 手动更新历史记录
         # 如果其他插件（如 context_undo）设置了 skip_history_save=True，则跳过，
@@ -1244,26 +1268,11 @@ GIF 示例结构：
                     
                     clean_text = clean_text.strip()
 
-                    # When the core LLM history save has already happened, only
-                    # replace the last assistant text with the rendered version.
-                    has_any_user = any(
-                        isinstance(message, dict) and message.get("role") == "user"
-                        for message in history
-                    )
-                    if history and history[-1].get("role") == "assistant" and has_any_user:
+                    # 对齐旧版本策略：只替换最后一条 assistant，或在末尾追加 assistant。
+                    # 不在这里合成 user 记录，避免打乱核心会话管理器维护的历史结构。
+                    if history and history[-1].get("role") == "assistant":
                         history[-1]["content"] = clean_text
                     else:
-                        # Some non-LLM/plugin replies reach html_render without a
-                        # matching user record in conversation history. Preserve the
-                        # current event text first so we do not create assistant-only
-                        # conversations that break undo/indexing logic later.
-                        message_text = (event.message_str or "").strip()
-                        if message_text and (
-                            not history
-                            or history[-1].get("role") != "user"
-                            or str(history[-1].get("content", "")).strip() != message_text
-                        ):
-                            history.append({"role": "user", "content": message_text})
                         history.append({"role": "assistant", "content": clean_text})
                     # --- 替换结束 ---
 
