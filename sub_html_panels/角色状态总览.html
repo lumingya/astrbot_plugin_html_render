@@ -1,0 +1,288 @@
+<style>
+.character-overview {
+  --co-user-accent: {{color:theme_color}};
+  --co-accent: var(--co-user-accent, #d982a4);
+  --co-accent-deep: #b96183;
+  --co-ink: #573b49;
+  --co-muted: #987587;
+  --co-paper: rgba(255, 248, 250, 0.96);
+  --co-surface: rgba(255, 255, 255, 0.68);
+  --co-line: rgba(217, 130, 164, 0.25);
+  --co-soft: rgba(217, 130, 164, 0.13);
+  --co-line: color-mix(in srgb, var(--co-accent) 25%, #ffffff);
+  --co-soft: color-mix(in srgb, var(--co-accent) 13%, transparent);
+  --co-shadow: rgba(118, 68, 91, 0.14);
+  width: min(100%, 520px);
+  margin: 12px auto;
+  color: var(--co-ink);
+  background: var(--co-paper);
+  border: 1px solid var(--co-line);
+  border-top: 3px solid var(--co-accent);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px var(--co-shadow);
+  overflow: hidden;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.character-overview[data-theme="light"] {
+  --co-paper: rgba(255, 252, 253, 0.98);
+  --co-surface: rgba(255, 255, 255, 0.82);
+  --co-ink: #513946;
+  --co-muted: #987586;
+}
+
+.character-overview[data-theme="night"] {
+  --co-paper: #272026;
+  --co-surface: rgba(255, 255, 255, 0.055);
+  --co-ink: #f2e8ed;
+  --co-muted: #c5aab7;
+  --co-line: rgba(213, 137, 166, 0.35);
+  --co-soft: rgba(213, 137, 166, 0.19);
+  --co-line: color-mix(in srgb, var(--co-accent) 35%, #5c4651);
+  --co-soft: color-mix(in srgb, var(--co-accent) 19%, transparent);
+  --co-shadow: rgba(22, 14, 19, 0.28);
+}
+
+.character-overview .co-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px 12px;
+  background: linear-gradient(135deg, var(--co-soft), transparent 68%);
+  border-bottom: 1px solid var(--co-line);
+}
+
+.character-overview .co-eyebrow {
+  margin: 0 0 3px;
+  color: var(--co-muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.character-overview .co-title {
+  margin: 0;
+  color: var(--co-ink);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.character-overview .co-updated {
+  color: var(--co-muted);
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.character-overview .co-content {
+  padding: 12px 16px 14px;
+}
+
+.character-overview .co-section {
+  margin: 0 0 15px;
+}
+
+.character-overview .co-section:last-child {
+  margin-bottom: 0;
+}
+
+.character-overview .co-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 7px;
+  color: var(--co-accent-deep);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.character-overview .co-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--co-line);
+}
+
+.character-overview .co-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.character-overview .co-cell {
+  min-width: 0;
+  padding: 7px 9px;
+  background: var(--co-surface);
+  border: 1px solid var(--co-line);
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.character-overview .co-cell--wide {
+  grid-column: 1 / -1;
+}
+
+.character-overview .co-label {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--co-muted);
+  font-size: 10px;
+}
+
+.character-overview .co-value {
+  display: block;
+  min-width: 0;
+  color: var(--co-ink);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.character-overview .co-meter {
+  display: grid;
+  gap: 4px;
+  padding: 7px 9px;
+  background: var(--co-surface);
+  border: 1px solid var(--co-line);
+  border-radius: 6px;
+}
+
+.character-overview .co-meter__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--co-muted);
+  font-size: 10px;
+}
+
+.character-overview .co-meter__value {
+  color: var(--co-ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.character-overview .co-meter__track {
+  height: 4px;
+  background: var(--co-soft);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.character-overview .co-meter__fill {
+  display: block;
+  width: var(--co-progress);
+  height: 100%;
+  background: var(--co-accent);
+  border-radius: inherit;
+}
+
+.character-overview .co-meter--secondary .co-meter__fill {
+  background: var(--co-accent-deep);
+}
+
+.character-overview .co-list {
+  display: grid;
+  gap: 5px;
+}
+
+.character-overview .co-row {
+  display: grid;
+  grid-template-columns: minmax(54px, 68px) minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--co-line);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.character-overview .co-row:last-child {
+  border-bottom: 0;
+}
+
+.character-overview .co-row .co-label {
+  margin: 0;
+  padding-top: 1px;
+}
+
+.character-overview .co-row .co-value {
+  text-align: right;
+}
+
+.character-overview .co-highlight {
+  color: var(--co-accent-deep);
+  font-weight: 700;
+}
+
+@media (max-width: 380px) {
+  .character-overview .co-header,
+  .character-overview .co-content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .character-overview .co-header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .character-overview .co-updated {
+    text-align: left;
+  }
+
+  .character-overview .co-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .character-overview .co-cell--wide {
+    grid-column: auto;
+  }
+}
+</style>
+
+<section class="character-overview" data-theme="{{token:theme_mode}}" aria-label="{{panel_name}}">
+  <header class="co-header">
+    <div>
+      <p class="co-eyebrow">CURRENT STATUS</p>
+      <h2 class="co-title">{{value:character}}</h2>
+    </div>
+    <time class="co-updated">更新于 {{updated_at}}</time>
+  </header>
+
+  <div class="co-content">
+    <section class="co-section">
+      <h3 class="co-section-title">当前着装</h3>
+      <div class="co-list">
+        <div class="co-row"><span class="co-label">上装</span><span class="co-value">{{value:outfit_top}}</span></div>
+        <div class="co-row"><span class="co-label">下装</span><span class="co-value">{{value:outfit_bottom}}</span></div>
+        <div class="co-row"><span class="co-label">性玩具</span><span class="co-value">{{value:outfit_toy}}</span></div>
+      </div>
+    </section>
+
+    <section class="co-section">
+      <h3 class="co-section-title">情欲状态</h3>
+      <div class="co-grid">
+        <div class="co-meter">
+          <div class="co-meter__meta"><span>性欲</span><span class="co-meter__value">{{value:arousal}} / 100</span></div>
+          <div class="co-meter__track"><span class="co-meter__fill" style="--co-progress: {{percent:arousal}}%"></span></div>
+        </div>
+        <div class="co-meter co-meter--secondary">
+          <div class="co-meter__meta"><span>堕落值</span><span class="co-meter__value">{{value:depravity}} / 100</span></div>
+          <div class="co-meter__track"><span class="co-meter__fill" style="--co-progress: {{percent:depravity}}%"></span></div>
+        </div>
+        <div class="co-cell"><span class="co-label">堕落等级</span><span class="co-value">{{value:depravity_level}}</span></div>
+        <div class="co-cell"><span class="co-label">总暴露值</span><span class="co-value">{{value:total_exposure}}</span></div>
+        <div class="co-cell"><span class="co-label">宫内精液</span><span class="co-value">{{value:womb_semen}}</span></div>
+        <div class="co-cell"><span class="co-label">肛门精液</span><span class="co-value">{{value:anal_semen}}</span></div>
+        <div class="co-cell"><span class="co-label">淫水数量</span><span class="co-value">{{value:arousal_fluid}}</span></div>
+        <div class="co-cell"><span class="co-label">外部痕迹</span><span class="co-value">{{value:external_semen}}</span></div>
+      </div>
+    </section>
+
+  </div>
+</section>

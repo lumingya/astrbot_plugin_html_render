@@ -131,22 +131,33 @@ def detect_render_tag(text: str) -> List[Tuple[str, Optional[str], str, bool]]:
 
     :return: List[(完整匹配, 模板名|None, 内容, 是否GIF)]
     """
-    pattern = r'<render(?:\s+template=["\']([^"\']+)["\'])?(\s+gif)?\s*>(.*?)</render>'
-    matches = re.findall(pattern, text, re.DOTALL)
+    pattern = re.compile(r"<render\b([^>]*)>(.*?)</render>", re.DOTALL | re.IGNORECASE)
+    template_pattern = re.compile(
+        r"""template\s*=\s*(?:
+            "([^"]+)" |
+            '([^']+)' |
+            \\"([^"]+)\\" |
+            \\'([^']+)\\'
+        )""",
+        re.IGNORECASE | re.VERBOSE,
+    )
+    gif_pattern = re.compile(r"(?:^|\s)gif(?:\s|$)", re.IGNORECASE)
 
     result = []
-    for m in matches:
-        template_name = m[0] if m[0] else None
-        is_gif = bool(m[1].strip()) if m[1] else False
-        content = m[2].strip()
+    for match in pattern.finditer(text):
+        attrs = match.group(1) or ""
+        content = match.group(2).strip()
 
-        full_match = "<render"
-        if template_name:
-            full_match += f' template="{template_name}"'
-        if is_gif:
-            full_match += " gif"
-        full_match += f">{m[2]}</render>"
+        template_name = None
+        template_match = template_pattern.search(attrs)
+        if template_match:
+            template_name = next(
+                (group for group in template_match.groups() if group),
+                None,
+            )
 
+        is_gif = bool(gif_pattern.search(attrs))
+        full_match = match.group(0)
         result.append((full_match, template_name, content, is_gif))
 
     return result
@@ -164,11 +175,20 @@ def detect_html_tags(text: str) -> bool:
 
 def detect_dialogue(
     text: str,
-    quote_pattern: str = r'[""「」『』]',
-    quote_threshold: int = 2,
+    quote_pattern: str = "[\"'“”‘’「」『』]",
+    quote_threshold: int = 1,
 ) -> bool:
     """检测是否是对话内容（包含多个引号对）"""
-    quotes = re.findall(quote_pattern, text)
+    try:
+        quote_threshold = max(1, int(quote_threshold))
+    except (TypeError, ValueError):
+        quote_threshold = 1
+
+    try:
+        quotes = re.findall(quote_pattern, text)
+    except (re.error, TypeError) as exc:
+        logger.warning(f"[HTML渲染] 对话引号匹配模式无效: {exc}")
+        return False
     return len(quotes) >= quote_threshold * 2
 
 
@@ -281,6 +301,146 @@ def nl2br(html: str) -> str:
     for i, block in enumerate(protected_blocks):
         result = result.replace(f"__ASTR_HTML_RENDER_PROTECTED_{i}__", block)
 
+    return result
+
+
+# ==================== 原始 HTML 混合内容换行处理 ====================
+
+# 标准 HTML 块级/结构标签：它们之间的空行视为源码排版，不产生 <br>
+_RAW_BLOCK_LEVEL_TAGS = frozenset({
+    "html", "head", "body", "meta", "link", "title", "base",
+    "div", "section", "article", "header", "footer", "main", "nav",
+    "address", "aside",
+    "p", "ul", "ol", "li", "dl", "dt", "dd",
+    "table", "thead", "tbody", "tfoot", "tr", "td", "th",
+    "caption", "colgroup", "col",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "blockquote", "hr", "br", "form", "fieldset", "legend",
+    "figure", "figcaption", "details", "summary", "template",
+    "canvas", "video", "audio", "iframe", "source",
+    "style", "script", "noscript",
+    # 插件语义标签中约定为块级的：所有内置模板都以 display:block 渲染，
+    # 它们自带换行与外边距，不需要额外 <br> 分段
+    "scene", "narration",
+})
+
+_RAW_PROTECTED_TOKEN_FMT = "<x-astr-raw-protected-{}/>"
+_RAW_PROTECTED_TOKEN_RE = re.compile(r"<x-astr-raw-protected-(\d+)/>")
+
+
+def _raw_tag_kind(tag: Optional[str]) -> str:
+    """
+    判断标签类型：
+    - "block": 标准块级/结构标签、注释、受保护占位块（空行视为排版）
+    - "inline": 行内标签或自定义语义标签（act/q/scene 等，空行视为分段）
+    - "boundary": 内容开头/结尾
+    """
+    if tag is None:
+        return "boundary"
+    if tag.startswith("<!") or tag.startswith("<x-astr-raw-protected-"):
+        return "block"
+    m = re.match(r"</?\s*([a-zA-Z][a-zA-Z0-9-]*)", tag)
+    if not m:
+        return "block"
+    return "block" if m.group(1).lower() in _RAW_BLOCK_LEVEL_TAGS else "inline"
+
+
+def nl2br_raw_html(html: str) -> str:
+    """
+    针对「自带 <style> 的原始 HTML + 纯文本混合输出」的换行修复。
+
+    浏览器会把源码中的换行折叠成空格，导致混合输出里
+    <act>/<q> 等行内语义标签之间的空行分段全部挤在一起。
+
+    处理规则（保护 <style>/<script>/<pre>/<code>/<textarea> 不受影响）：
+    - 任一侧为块级标签（div/p/scene 等）的空白 → 布局自带换行，删除
+    - 两侧均为行内/自定义标签时：空行（>=2 个换行）→ <br><br>，
+      单个换行 → 一个空格（视为软换行）
+    - 文本段内部：空行 → <br><br>，单个换行 → <br>
+    - 文本与行内标签相邻处的空行 → <br><br>，单个换行 → 空格
+    - 不含换行的纯空格保持原样（行内元素间距有意义）
+    """
+    if not html:
+        return html
+
+    html = html.replace("\r\n", "\n").replace("\r", "\n")
+
+    protected_blocks: List[str] = []
+
+    def _protect(m: re.Match) -> str:
+        protected_blocks.append(m.group(0))
+        return _RAW_PROTECTED_TOKEN_FMT.format(len(protected_blocks) - 1)
+
+    for tag in ("style", "script", "pre", "code", "textarea"):
+        html = re.sub(
+            rf"<{tag}\b[^>]*>[\s\S]*?</{tag}>", _protect, html, flags=re.IGNORECASE
+        )
+
+    parts = re.split(r"(<[^>]+?>)", html)
+    n = len(parts)
+    out: List[str] = []
+
+    for i, seg in enumerate(parts):
+        # re.split 捕获组模式下，奇数下标为标签，偶数下标为文本
+        if i % 2 == 1:
+            out.append(seg)
+            continue
+        if seg == "":
+            continue
+
+        prev_kind = _raw_tag_kind(parts[i - 1]) if i - 1 >= 0 else "boundary"
+        next_kind = _raw_tag_kind(parts[i + 1]) if i + 1 < n else "boundary"
+
+        # 纯空白文本段（位于两个标签之间）
+        # 只要一侧是块级标签，布局上必然换行（并自带外边距），
+        # 无需插入 <br>；只有两侧都是行内元素时才需要人为分段
+        if seg.strip() == "":
+            newline_count = seg.count("\n")
+            if newline_count == 0:
+                out.append(seg)  # 纯空格：行内元素间距，保留
+            elif prev_kind != "inline" or next_kind != "inline":
+                pass  # 邻接块级标签/边界：换行由布局保证，删除源码排版空白
+            elif newline_count >= 2:
+                out.append("<br><br>")
+            else:
+                out.append(" ")
+            continue
+
+        # 含内容的文本段：分别处理首部空白、尾部空白和内部换行
+        lead_match = re.match(r"^[ \t]*\n[ \t\n]*", seg)
+        core_start = lead_match.end() if lead_match else 0
+        trail_match = re.search(r"[ \t\n]*\n[ \t]*$", seg[core_start:])
+        if trail_match:
+            core_end = core_start + trail_match.start()
+        else:
+            core_end = len(seg)
+
+        def _edge(ws: str, kind: str) -> str:
+            if not ws or kind != "inline":
+                return ""  # 邻接块级标签/内容边界：视为排版空白
+            if ws.count("\n") >= 2:
+                return "<br><br>"
+            return " "
+
+        core = seg[core_start:core_end]
+        core = re.sub(r"\n{3,}", "\n\n", core)
+        core = re.sub(r"[ \t]*\n[ \t]*\n[ \t]*", "<br><br>", core)
+        core = re.sub(r"[ \t]*\n[ \t]*", "<br>", core)
+
+        out.append(_edge(seg[:core_start], prev_kind))
+        out.append(core)
+        out.append(_edge(seg[core_end:], next_kind))
+
+    result = "".join(out)
+    result = re.sub(r"(?:<br>\s*){3,}", "<br><br>", result)
+
+    def _restore(m: re.Match) -> str:
+        idx = int(m.group(1))
+        if 0 <= idx < len(protected_blocks):
+            return protected_blocks[idx]
+        return m.group(0)
+
+    result = _RAW_PROTECTED_TOKEN_RE.sub(_restore, result)
     return result
 
 

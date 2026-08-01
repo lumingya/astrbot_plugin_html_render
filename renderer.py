@@ -15,6 +15,46 @@ from astrbot.api import logger
 _PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 _FONT_MANIFEST: Dict[str, str] = {}  # URL -> 本地绝对路径
 _FONT_MANIFEST_LOADED = False
+_FONT_CSS_CACHE: Optional[str] = None  # 本地 Google Fonts CSS（@font-face 规则，src 指向 gstatic）
+_FONT_CSS_LOADED = False
+
+
+def _load_font_css() -> Optional[str]:
+    """
+    加载本地缓存的 Google Fonts CSS（download_fonts.py 生成的 google_fonts_original.css）。
+
+    重要：模板里的 <link href="https://fonts.googleapis.com/css2?..."> 请求
+    会被渲染器拦截。若直接 abort，@font-face 规则永远不会注入，
+    fonts.gstatic.com 的字体文件也就永远不会被请求，本地字体映射完全失效
+    （表现为所有模板都回退到系统字体）。
+
+    因此改为：用本地 CSS 直接 fulfill 该请求。CSS 内的 src 仍指向
+    fonts.gstatic.com，随后由 manifest 路由到本地 woff2 文件，全程离线。
+    """
+    global _FONT_CSS_CACHE, _FONT_CSS_LOADED
+    if _FONT_CSS_LOADED:
+        return _FONT_CSS_CACHE
+
+    css_path = os.path.join(_PLUGIN_DIR, "fonts", "google_fonts_original.css")
+    if os.path.exists(css_path):
+        try:
+            with open(css_path, "r", encoding="utf-8") as f:
+                _FONT_CSS_CACHE = f.read()
+            logger.info(
+                f"[HTML渲染] 已加载本地字体 CSS ({len(_FONT_CSS_CACHE) // 1024} KB)，"
+                "Google Fonts 请求将离线响应"
+            )
+        except Exception as e:
+            logger.warning(f"[HTML渲染] 读取本地字体 CSS 失败: {e}")
+            _FONT_CSS_CACHE = None
+    else:
+        logger.debug(
+            "[HTML渲染] 未找到 fonts/google_fonts_original.css，"
+            "可运行 download_fonts.py 生成本地字体缓存"
+        )
+
+    _FONT_CSS_LOADED = True
+    return _FONT_CSS_CACHE
 
 
 def _load_font_manifest():
@@ -28,9 +68,10 @@ def _load_font_manifest():
         try:
             with open(manifest_path, "r", encoding="utf-8") as f:
                 raw = json.load(f)
-            # 转换为绝对路径
+            # 转换为绝对路径（manifest 可能在 Windows 上生成，统一分隔符以兼容 Linux 部署）
             for url, rel_path in raw.items():
-                abs_path = os.path.join(_PLUGIN_DIR, rel_path)
+                normalized = str(rel_path).replace("\\", "/")
+                abs_path = os.path.join(_PLUGIN_DIR, *normalized.split("/"))
                 if os.path.exists(abs_path):
                     _FONT_MANIFEST[url] = abs_path
             logger.info(f"[HTML渲染] 已加载 {len(_FONT_MANIFEST)} 个本地字体映射")
@@ -121,15 +162,12 @@ async def _measure_capture_height(page) -> int:
     """Measure a conservative capture height so the last line is not clipped."""
     height = await page.evaluate(
         f"""() => {{
-            const docEl = document.documentElement;
             const body = document.body;
+            // 注意：不使用 documentElement 的高度——它永远不小于当前视口高度，
+            // 会导致短内容渲染出大片空白底部。body + 元素底边扫描已足够精确。
             const heights = [
-                docEl ? docEl.scrollHeight : 0,
-                docEl ? docEl.offsetHeight : 0,
-                docEl ? docEl.clientHeight : 0,
                 body ? body.scrollHeight : 0,
                 body ? body.offsetHeight : 0,
-                body ? body.clientHeight : 0,
             ];
 
             let maxBottom = 0;
@@ -412,10 +450,23 @@ async def html_to_image_playwright(
             # 无本地映射或读取失败，阻断请求（避免网络延迟）
             await route.abort()
 
-        # 拦截 Google Fonts 字体文件请求
+        async def _handle_font_css_route(route):
+            """用本地缓存的 CSS 响应 Google Fonts 样式表请求（离线可用）"""
+            local_css = _load_font_css()
+            if local_css:
+                await route.fulfill(
+                    status=200,
+                    content_type="text/css; charset=utf-8",
+                    body=local_css,
+                )
+                return
+            # 无本地 CSS 缓存时保持原行为：阻断请求，避免网络等待
+            await route.abort()
+
+        # 拦截 Google Fonts 字体文件请求（manifest 命中则用本地 woff2 响应）
         await page.route("**://fonts.gstatic.com/**", _handle_font_route)
-        # 拦截 Google Fonts CSS 请求（如果模板仍有外部 <link>）
-        await page.route("**://fonts.googleapis.com/**", lambda route: route.abort())
+        # 拦截 Google Fonts CSS 请求：优先用本地 CSS 响应，否则阻断
+        await page.route("**://fonts.googleapis.com/**", _handle_font_css_route)
 
         _t_page = _time.perf_counter()
 
@@ -525,9 +576,15 @@ async def html_to_image_playwright(
         import traceback
         logger.error(traceback.format_exc())
 
-        # 浏览器可能已崩溃，重置实例
+        # 浏览器可能已崩溃：先尝试关闭旧实例再重置，避免残留僵尸 Chromium 进程
         global _browser_instance
+        crashed_browser = _browser_instance
         _browser_instance = None
+        if crashed_browser is not None:
+            try:
+                await crashed_browser.close()
+            except Exception:
+                pass
         return False
 
     finally:

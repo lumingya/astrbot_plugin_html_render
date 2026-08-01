@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   🕯️ 暖窗手札 · A Letter by the Warm Window
+   奶油纸 + 琥珀暮色 + 邮票火漆，一封手写的信
+   ============================================================ */
+:root {
+  --w: 520px;
+  --paper: #fdf8ee;
+  --paper-deep: #f6ecda;
+  --ink: #4b3a2f;
+  --ink-soft: #7d6a5a;
+  --amber: #c98844;
+  --amber-deep: #a5622e;
+  --terra: #b56a4e;
+  --olive: #8a9160;
+  --wine: #9c4f43;
+  --line: rgba(180, 150, 110, .28);
+  --font-script: 'Ma Shan Zheng', 'Kaiti SC', 'STKaiti', 'Noto Serif SC', 'Noto Serif CJK SC', serif;
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif CJK SC', serif;
+  --font-body: 'Noto Sans SC', 'Noto Sans CJK SC', "Microsoft YaHei", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  padding: 32px 30px;
+  display: inline-block;
+  background:
+    radial-gradient(500px 320px at 88% -6%, rgba(240, 178, 108, .35), transparent 60%),
+    radial-gradient(420px 320px at 0% 100%, rgba(190, 140, 90, .22), transparent 60%),
+    linear-gradient(165deg, #efe2cb 0%, #e9d9c0 55%, #e3cfb4 100%);
+}
+
+/* ==================== 信纸 ==================== */
+.letter {
+  width: var(--w);
+  max-width: var(--w);
+  background: var(--paper);
+  border-radius: 8px;
+  position: relative;
+  padding: 26px 30px 24px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 2px 4px rgba(120, 90, 50, .10),
+    0 18px 44px rgba(110, 80, 40, .22);
+}
+
+/* 纸纹 */
+.letter::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23p)' opacity='.045'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* 缝线内框 */
+.letter::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px dashed rgba(180, 140, 90, .4);
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+/* ==================== 信头 ==================== */
+.letter-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 4px 2px 14px;
+  border-bottom: 2px solid rgba(180, 140, 90, .35);
+  position: relative;
+}
+.letter-head::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -5px;
+  height: 1px;
+  background: rgba(180, 140, 90, .3);
+}
+
+.head-text { flex: 1; padding-top: 6px; }
+.head-title {
+  font-family: var(--font-script);
+  font-size: 30px;
+  color: var(--amber-deep);
+  letter-spacing: 4px;
+  line-height: 1.3;
+}
+.head-sub {
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  letter-spacing: 3px;
+  color: var(--ink-soft);
+}
+.head-to {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.head-to b { color: var(--terra); font-weight: 700; }
+
+/* 邮票 */
+.stamp {
+  flex-shrink: 0;
+  width: 74px;
+  padding: 5px;
+  background: #fff;
+  --perf: radial-gradient(circle at 50% 50%, transparent 2.6px, #fff 2.8px);
+  -webkit-mask:
+    radial-gradient(circle 3px at 0 0, transparent 98%, #000) -3px -3px / 10px 10px;
+  box-shadow: 0 2px 6px rgba(120, 90, 50, .25);
+  transform: rotate(3deg);
+}
+.stamp-inner {
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, #f8e2c0, #eec39a 55%, #e0a878);
+  padding: 10px 4px 7px;
+  text-align: center;
+}
+.stamp-icon { font-size: 22px; line-height: 1; }
+.stamp-val {
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #7c5230;
+}
+
+/* 邮戳 */
+.postmark {
+  position: absolute;
+  top: 40px;
+  right: 78px;
+  width: 68px;
+  height: 68px;
+  border: 2px solid rgba(90, 70, 55, .35);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  line-height: 1.6;
+  color: rgba(90, 70, 55, .5);
+  transform: rotate(-12deg);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ==================== 正文 ==================== */
+.body-area { padding: 20px 4px 0; }
+
+.content {
+  font-size: 15.5px;
+  line-height: 2.15;
+  width: 100%;
+  max-width: 100%;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent calc(2.15em - 1px),
+    var(--line) calc(2.15em - 1px),
+    var(--line) 2.15em
+  );
+  background-position: 0 .55em;
+}
+.content, .content * {
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box !important;
+}
+
+.content p { margin-bottom: 1em; text-indent: 2em; }
+.content p:last-child { margin-bottom: 0; }
+
+/* 首段首字下沉 */
+.content > p:first-child::first-letter {
+  float: left;
+  font-family: var(--font-script);
+  font-size: 3em;
+  line-height: .9;
+  padding: 4px 8px 0 0;
+  color: var(--terra);
+}
+.content > p:first-child { text-indent: 0; }
+
+/* ==================== 标题 ==================== */
+.content h1, .content h2, .content h3, .content h4 {
+  font-family: var(--font-script);
+  color: var(--amber-deep);
+  font-weight: 400;
+  text-indent: 0;
+  line-height: 1.6;
+  margin: 1.1em 0 .5em;
+  background: none;
+}
+.content h1 { font-size: 28px; text-align: center; letter-spacing: 3px; }
+.content h1::after {
+  content: "﹏﹏﹏";
+  display: block;
+  font-size: 14px;
+  color: var(--amber);
+  letter-spacing: 2px;
+  opacity: .7;
+  margin-top: -2px;
+}
+.content h2 { font-size: 23px; letter-spacing: 2px; }
+.content h2::before { content: "✎ "; color: var(--terra); font-size: .8em; }
+.content h3 { font-size: 19px; color: var(--terra); }
+.content h4 { font-size: 16.5px; color: var(--olive); font-family: var(--font-serif); font-weight: 700; }
+
+/* ==================== 语义标签 ==================== */
+q {
+  display: inline;
+  quotes: none;
+  color: var(--wine);
+  font-weight: 500;
+  background: linear-gradient(transparent 30%, rgba(201, 136, 68, .18) 30%, rgba(201, 136, 68, .18) 92%, transparent 92%);
+  padding: 1px 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+q::before { content: "「"; color: var(--amber); }
+q::after  { content: "」"; color: var(--amber); }
+
+inner {
+  display: inline;
+  color: #8a7290;
+  font-style: italic;
+  font-size: .94em;
+  border-bottom: 1px dotted rgba(138, 114, 144, .6);
+  padding: 0 3px;
+}
+inner::before { content: "（"; opacity: .6; }
+inner::after  { content: "）"; opacity: .6; }
+
+act {
+  display: inline;
+  color: var(--olive);
+  font-weight: 600;
+  padding: 0 2px;
+  text-decoration: underline wavy rgba(138, 145, 96, .5);
+  text-underline-offset: 5px;
+}
+
+scene {
+  display: block;
+  margin: 1.3em 0;
+  padding: 14px 18px 14px 40px;
+  text-indent: 0;
+  font-style: italic;
+  color: #6d5c48;
+  background: var(--paper-deep);
+  border-radius: 6px;
+  border: 1px solid rgba(180, 140, 90, .3);
+  position: relative;
+  box-shadow: 2px 3px 0 rgba(160, 120, 70, .12);
+}
+scene::before {
+  content: "🕯️";
+  position: absolute;
+  left: 12px;
+  top: 13px;
+  font-size: 16px;
+  font-style: normal;
+}
+
+aside {
+  display: block;
+  width: fit-content;
+  max-width: 86%;
+  margin: 1.3em auto;
+  padding: 8px 20px;
+  text-align: center;
+  text-indent: 0;
+  font-family: var(--font-script);
+  font-size: 1.05em;
+  color: var(--ink-soft);
+  background: #fbf3e2;
+  border: 1px solid rgba(180, 140, 90, .35);
+  transform: rotate(-.8deg);
+  box-shadow: 2px 2px 0 rgba(160, 120, 70, .15);
+}
+aside::before { content: "✳ "; color: var(--amber); }
+aside::after  { content: " ✳"; color: var(--amber); }
+
+/* ==================== 常规元素 ==================== */
+.content blockquote {
+  margin: 1.2em 0;
+  padding: 12px 18px;
+  text-indent: 0;
+  color: #7a5c46;
+  font-style: italic;
+  background: rgba(201, 136, 68, .08);
+  border-left: 3px solid var(--amber);
+  border-radius: 0 8px 8px 0;
+}
+.content blockquote p { text-indent: 0; margin-bottom: .4em; }
+.content blockquote p:last-child { margin-bottom: 0; }
+
+.content ul, .content ol { margin: .9em 0 .9em 1.6em; padding-left: .4em; text-indent: 0; }
+.content li { margin-bottom: .4em; }
+.content ul li::marker { color: var(--terra); content: "✾ "; font-size: .85em; }
+.content ol li::marker { color: var(--amber-deep); font-weight: 700; }
+
+.content hr {
+  border: none;
+  height: 20px;
+  margin: 1.3em 0;
+  position: relative;
+  background: none;
+}
+.content hr::before {
+  content: "· · · ❦ · · ·";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--amber);
+  font-size: 13px;
+  letter-spacing: 4px;
+  opacity: .6;
+}
+
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: .87em;
+  color: var(--wine);
+  background: #f4e8d2;
+  border: 1px solid rgba(180, 140, 90, .35);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: pre-wrap !important;
+}
+.content pre {
+  margin: 1.1em 0;
+  padding: 15px 17px;
+  background: #453729;
+  color: #efe3cd;
+  border-radius: 8px;
+  box-shadow: 3px 4px 0 rgba(160, 120, 70, .2);
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  text-indent: 0;
+}
+.content pre code { background: none; border: none; padding: 0; color: inherit; }
+
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2em 0;
+  font-size: .92em;
+  table-layout: fixed;
+  text-indent: 0;
+  background: #fffdf6;
+  border: 1px solid rgba(180, 140, 90, .4);
+  box-shadow: 3px 3px 0 rgba(160, 120, 70, .12);
+}
+.content th, .content td {
+  padding: 9px 12px;
+  border: 1px solid rgba(180, 140, 90, .3);
+  text-align: left;
+}
+.content th {
+  background: linear-gradient(180deg, #eeD9b8, #e6cba2);
+  color: #6a4a26;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.content tr:nth-child(even) td { background: #faf4e6; }
+
+.content strong {
+  color: var(--amber-deep);
+  font-weight: 700;
+  background: linear-gradient(transparent 60%, rgba(201, 136, 68, .25) 60%);
+}
+.content em { color: var(--terra); }
+.content del { color: var(--ink-soft); opacity: .7; }
+.content a { color: var(--terra); text-decoration: underline dotted; text-underline-offset: 3px; }
+.content img { max-width: 100%; height: auto; border-radius: 6px; margin: .5em 0; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(120, 90, 50, .2); }
+
+.content details {
+  margin: 1.1em 0;
+  border: 1px solid rgba(180, 140, 90, .4);
+  border-radius: 8px;
+  background: #fbf5e8;
+  overflow: hidden;
+  text-indent: 0;
+}
+.content summary {
+  padding: 10px 15px;
+  font-weight: 700;
+  color: var(--amber-deep);
+  background: rgba(201, 136, 68, .12);
+  cursor: pointer;
+}
+.content summary::before { content: "✉ "; }
+.content details > *:not(summary) { padding: 10px 15px; text-indent: 0; }
+
+/* ==================== 信尾 ==================== */
+.letter-foot {
+  margin-top: 22px;
+  padding: 14px 4px 2px;
+  border-top: 1px solid rgba(180, 140, 90, .3);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  position: relative;
+}
+
+.sign-lines { font-size: 12.5px; color: var(--ink-soft); line-height: 2; }
+.sign-lines .date-line { letter-spacing: 1px; }
+.sign-lines .word-line { font-size: 11px; opacity: .8; }
+
+/* 火漆印 */
+.wax {
+  width: 54px;
+  height: 54px;
+  border-radius: 46% 54% 52% 48% / 52% 46% 54% 48%;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 200, 170, .85), transparent 42%),
+    radial-gradient(circle at 68% 74%, rgba(90, 20, 16, .55), transparent 50%),
+    #a03528;
+  box-shadow:
+    inset 0 2px 4px rgba(255, 235, 220, .5),
+    inset 0 -3px 6px rgba(60, 10, 8, .55),
+    0 3px 8px rgba(100, 40, 20, .4);
+  display: grid;
+  place-items: center;
+  transform: rotate(-6deg);
+}
+.wax span {
+  font-family: var(--font-script);
+  font-size: 22px;
+  color: rgba(255, 226, 200, .92);
+  text-shadow: 0 1px 2px rgba(70, 10, 8, .8);
+}
+</style>
+</head>
+<body>
+<div class="letter">
+  <div class="letter-head">
+    <div class="head-text">
+      <div class="head-title">暖窗手札</div>
+      <div class="head-sub">A LETTER BY THE WARM WINDOW</div>
+      <div class="head-to">致 <b>{{sender_name}}</b>：见字如晤</div>
+    </div>
+    <div class="stamp">
+      <div class="stamp-inner">
+        <div class="stamp-icon">🏮</div>
+        <div class="stamp-val">POST · 8</div>
+      </div>
+    </div>
+    <div class="postmark">{{date}}<br>{{weekday}}<br>WARM POST</div>
+  </div>
+
+  <div class="body-area">
+    <div class="content">{{content}}</div>
+  </div>
+
+  <div class="letter-foot">
+    <div class="sign-lines">
+      <div class="date-line">{{date}} · {{weekday}} · {{time}}</div>
+      <div class="word-line">窗边灯下，笔谈为记</div>
+    </div>
+    <div class="wax"><span>札</span></div>
+  </div>
+</div>
+</body>
+</html>

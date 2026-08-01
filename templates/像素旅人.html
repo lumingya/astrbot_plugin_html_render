@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   🎮 像素旅人 · Pixel Wanderer
+   复古 RPG 对话框 + HP/MP 状态栏 + 像素云（自带动画，可配 gif）
+   ============================================================ */
+:root {
+  --w: 520px;
+  --night: #1a1c2c;
+  --panel: #29366f;
+  --panel-deep: #1f2a55;
+  --text: #f4f4f4;
+  --text-dim: #94b0c2;
+  --red: #b13e53;
+  --orange: #ef7d57;
+  --yellow: #ffcd75;
+  --lime: #a7f070;
+  --green: #38b764;
+  --cyan: #73eff7;
+  --blue: #41a6f6;
+  --purple: #5d275d;
+  --white: #f4f4f4;
+  --font-pix: 'ZCOOL KuaiLe', 'Noto Sans SC', "Microsoft YaHei", sans-serif;
+  --font-body: 'Noto Sans SC', 'Noto Sans CJK SC', "Microsoft YaHei", sans-serif;
+  --font-mono: Consolas, 'Courier New', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  padding: 30px;
+  display: inline-block;
+  position: relative;
+  background: linear-gradient(180deg, #0f1633 0%, #1a2450 40%, #29366f 78%, #3b5dc9 100%);
+}
+
+/* 星星 */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #f4f4f4 50%, transparent 51%),
+    radial-gradient(2px 2px at 34% 8%, #ffcd75 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 58% 22%, #73eff7 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 80% 12%, #f4f4f4 50%, transparent 51%),
+    radial-gradient(2px 2px at 92% 30%, #f4f4f4 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 22% 38%, #f4f4f4 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 70% 40%, #ffcd75 50%, transparent 51%);
+  pointer-events: none;
+}
+
+/* ==================== 游戏机身 ==================== */
+.console {
+  width: var(--w);
+  max-width: var(--w);
+  position: relative;
+  z-index: 1;
+  background: var(--night);
+  border: 4px solid #0c0d16;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 4px #3b4466,
+    0 0 0 8px #0c0d16,
+    0 22px 46px rgba(0, 0, 0, .6);
+  image-rendering: pixelated;
+}
+
+/* 像素云装饰条 */
+.skybar {
+  position: relative;
+  height: 74px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #3b5dc9, #41a6f6);
+  border-bottom: 4px solid #0c0d16;
+}
+
+.pixel-cloud {
+  position: absolute;
+  width: 12px; height: 12px;
+  background: #f4f4f4;
+  box-shadow:
+    12px 0 #f4f4f4, 24px 0 #f4f4f4, 36px 0 #f4f4f4,
+    -12px 12px #f4f4f4, 0 12px #f4f4f4, 12px 12px #f4f4f4, 24px 12px #f4f4f4, 36px 12px #f4f4f4, 48px 12px #f4f4f4;
+  opacity: .92;
+  animation: drift 22s linear infinite;
+}
+.pixel-cloud.c1 { top: 14px; left: 30px; }
+.pixel-cloud.c2 { top: 34px; left: 300px; transform: scale(.7); animation-duration: 28s; animation-delay: -12s; }
+@keyframes drift {
+  0% { transform: translateX(-90px); }
+  100% { transform: translateX(560px); }
+}
+
+.pixel-sun {
+  position: absolute;
+  top: 12px; right: 34px;
+  width: 12px; height: 12px;
+  background: var(--yellow);
+  box-shadow:
+    12px 0 var(--yellow), 0 12px var(--yellow), 12px 12px var(--yellow),
+    -12px 0 #ffe3a3, 24px 0 #ffe3a3, -12px 12px #ffe3a3, 24px 12px #ffe3a3,
+    0 -12px #ffe3a3, 12px -12px #ffe3a3, 0 24px #ffe3a3, 12px 24px #ffe3a3;
+}
+
+/* 地面 */
+.skybar::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 16px;
+  background:
+    repeating-linear-gradient(90deg, var(--green) 0 12px, #2f9e56 12px 24px),
+    var(--green);
+  border-top: 4px solid #237a41;
+}
+
+/* ==================== 状态栏 ==================== */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--panel-deep);
+  border-bottom: 4px solid #0c0d16;
+}
+
+.avatar {
+  width: 44px; height: 44px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border: 3px solid var(--yellow);
+  box-shadow: 3px 3px 0 #0c0d16;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+
+.stats { flex: 1; min-width: 0; }
+.stat-name {
+  font-family: var(--font-pix);
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 #0c0d16;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+.bar b {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  width: 20px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.bar .track {
+  flex: 1;
+  height: 10px;
+  background: #0c0d16;
+  border: 2px solid #3b4466;
+  position: relative;
+}
+.bar .fill {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, var(--red) 0 8px, var(--orange) 8px 16px);
+  width: 86%;
+}
+.bar.mp .fill { background: repeating-linear-gradient(90deg, var(--blue) 0 8px, var(--cyan) 8px 16px); width: 64%; }
+
+.coins {
+  flex-shrink: 0;
+  font-family: var(--font-pix);
+  font-size: 13px;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 #0c0d16;
+  background: var(--panel);
+  border: 3px solid #0c0d16;
+  box-shadow: inset 0 0 0 2px #3b4466;
+  padding: 6px 10px;
+}
+
+/* ==================== 对话框主体 ==================== */
+.dialog {
+  margin: 16px 16px 14px;
+  background: var(--panel);
+  border: 4px solid var(--white);
+  box-shadow:
+    0 0 0 4px #0c0d16,
+    inset 0 0 0 2px #0c0d16;
+  padding: 18px 18px 16px;
+  position: relative;
+}
+
+.dialog-tag {
+  position: absolute;
+  top: -14px;
+  left: 14px;
+  font-family: var(--font-pix);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #0c0d16;
+  background: var(--yellow);
+  border: 3px solid #0c0d16;
+  padding: 2px 10px;
+  box-shadow: 3px 3px 0 rgba(12, 13, 22, .55);
+}
+
+.content {
+  font-size: 15px;
+  line-height: 2.0;
+  width: 100%;
+  max-width: 100%;
+}
+.content, .content * {
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box !important;
+}
+
+.content p { margin-bottom: .9em; }
+.content p:last-child { margin-bottom: 0; }
+
+/* ==================== 标题 ==================== */
+.content h1, .content h2, .content h3, .content h4 {
+  font-family: var(--font-pix);
+  font-weight: 400;
+  line-height: 1.55;
+  margin: 1.2em 0 .55em;
+}
+.content h1:first-child, .content h2:first-child { margin-top: .1em; }
+
+.content h1 {
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 3px;
+  color: var(--yellow);
+  text-shadow: 3px 3px 0 #0c0d16;
+  padding: 8px 6px;
+  background: var(--panel-deep);
+  border: 3px solid #0c0d16;
+  box-shadow: inset 0 0 0 2px #3b4466;
+}
+.content h1::before { content: "★ "; color: var(--orange); }
+.content h1::after  { content: " ★"; color: var(--orange); }
+
+.content h2 {
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  text-shadow: 2px 2px 0 #0c0d16;
+  border-bottom: 3px dashed rgba(115, 239, 247, .5);
+  padding-bottom: 4px;
+}
+.content h2::before { content: "◆ "; color: var(--orange); }
+
+.content h3 { font-size: 16px; color: var(--lime); text-shadow: 2px 2px 0 #0c0d16; }
+.content h3::before { content: "▸ "; color: var(--yellow); }
+.content h4 { font-size: 14.5px; color: var(--orange); }
+
+/* ==================== 语义标签 ==================== */
+q {
+  display: inline;
+  quotes: none;
+  color: #ffe9b3;
+  font-weight: 500;
+  background: rgba(255, 205, 117, .14);
+  border: 2px solid rgba(255, 205, 117, .55);
+  padding: 1px 9px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+q::before { content: "『"; color: var(--yellow); }
+q::after  { content: "』"; color: var(--yellow); }
+
+inner {
+  display: inline;
+  color: var(--text-dim);
+  font-size: .93em;
+  background: rgba(148, 176, 194, .12);
+  border: 2px dashed rgba(148, 176, 194, .45);
+  padding: 1px 8px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+inner::before { content: "💭"; font-size: .85em; }
+
+act {
+  display: inline;
+  color: var(--lime);
+  font-weight: 700;
+  padding: 0 3px;
+  text-shadow: 2px 2px 0 rgba(12, 13, 22, .8);
+}
+act::before { content: "⚔"; font-size: .85em; }
+
+scene {
+  display: block;
+  margin: 1.3em 0;
+  padding: 12px 15px;
+  color: #bfe3ff;
+  font-size: .95em;
+  background: var(--panel-deep);
+  border: 3px solid var(--blue);
+  box-shadow: 4px 4px 0 #0c0d16;
+  position: relative;
+}
+scene::before {
+  content: "🗺 WORLD MAP";
+  position: absolute;
+  top: -12px;
+  left: 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #0c0d16;
+  background: var(--cyan);
+  border: 2px solid #0c0d16;
+  padding: 1px 7px;
+  font-weight: 700;
+}
+
+aside {
+  display: block;
+  width: fit-content;
+  max-width: 90%;
+  margin: 1.3em auto;
+  padding: 7px 18px;
+  text-align: center;
+  font-family: var(--font-pix);
+  font-size: .95em;
+  letter-spacing: 2px;
+  color: #0c0d16;
+  background: var(--yellow);
+  border: 3px solid #0c0d16;
+  box-shadow: 4px 4px 0 rgba(12, 13, 22, .6);
+}
+aside::before { content: "♪ "; }
+aside::after  { content: " ♪"; }
+
+/* ==================== 常规元素 ==================== */
+.content blockquote {
+  margin: 1.2em 0;
+  padding: 11px 15px;
+  color: #e6c9f2;
+  background: rgba(93, 39, 93, .35);
+  border-left: 5px solid #a05aa0;
+  border-top: 2px solid #0c0d16;
+  border-bottom: 2px solid #0c0d16;
+}
+.content blockquote::before {
+  content: "📜 QUEST LOG";
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #d8a0e8;
+  margin-bottom: 4px;
+}
+.content blockquote p { margin-bottom: .4em; }
+.content blockquote p:last-child { margin-bottom: 0; }
+
+.content ul, .content ol { margin: .9em 0 .9em 1.4em; padding-left: .5em; }
+.content li { margin-bottom: .45em; }
+.content ul li::marker { color: var(--yellow); content: "▶ "; font-size: .8em; }
+.content ol li::marker { color: var(--cyan); font-family: var(--font-mono); font-weight: 700; }
+
+.content hr {
+  border: none;
+  height: 8px;
+  margin: 1.4em 0;
+  background: repeating-linear-gradient(90deg, #3b4466 0 14px, transparent 14px 22px);
+}
+
+.content code {
+  font-family: var(--font-mono);
+  font-size: .87em;
+  color: var(--lime);
+  background: #0c0d16;
+  border: 2px solid #3b4466;
+  padding: 1px 7px;
+  white-space: pre-wrap !important;
+}
+.content pre {
+  margin: 1.1em 0;
+  padding: 13px 15px;
+  background: #0c0d16;
+  color: var(--lime);
+  border: 3px solid #3b4466;
+  box-shadow: 4px 4px 0 rgba(12, 13, 22, .8);
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+.content pre::before {
+  content: "> RUN PROGRAM_";
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+.content pre code { background: none; border: none; padding: 0; color: inherit; }
+
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2em 0;
+  font-size: .9em;
+  table-layout: fixed;
+  background: var(--panel-deep);
+  border: 3px solid #0c0d16;
+  box-shadow: 4px 4px 0 rgba(12, 13, 22, .6);
+}
+.content th, .content td {
+  padding: 8px 11px;
+  text-align: left;
+  border: 2px solid #0c0d16;
+}
+.content th {
+  font-family: var(--font-pix);
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: #0c0d16;
+  background: repeating-linear-gradient(90deg, var(--yellow) 0 14px, #ffdf9e 14px 28px);
+}
+.content tr:nth-child(even) td { background: rgba(59, 68, 102, .35); }
+
+.content strong {
+  color: var(--orange);
+  font-weight: 700;
+  text-shadow: 2px 2px 0 rgba(12, 13, 22, .8);
+}
+.content em { color: var(--cyan); }
+.content del { color: var(--text-dim); }
+.content a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; }
+.content img { max-width: 100%; height: auto; margin: .5em 0; border: 3px solid #0c0d16; box-shadow: 4px 4px 0 rgba(12,13,22,.6); image-rendering: pixelated; }
+
+.content details {
+  margin: 1.1em 0;
+  background: var(--panel-deep);
+  border: 3px solid #0c0d16;
+  box-shadow: 3px 3px 0 rgba(12, 13, 22, .6);
+}
+.content summary {
+  padding: 9px 13px;
+  font-family: var(--font-pix);
+  letter-spacing: 1px;
+  color: var(--yellow);
+  background: rgba(12, 13, 22, .45);
+  cursor: pointer;
+}
+.content summary::before { content: "🎁 "; }
+.content details > *:not(summary) { padding: 10px 13px; }
+
+/* ==================== 底部按键区 ==================== */
+.gamepad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 14px;
+  border-top: 4px solid #0c0d16;
+  background: var(--panel-deep);
+}
+.hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.hint .press {
+  color: var(--yellow);
+  animation: pressBlink 1.2s steps(2) infinite;
+}
+@keyframes pressBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .25; } }
+
+.keys { display: flex; gap: 8px; }
+.key {
+  font-family: var(--font-pix);
+  font-size: 11px;
+  color: #0c0d16;
+  width: 24px; height: 24px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #0c0d16;
+  box-shadow: 0 3px 0 #0c0d16;
+}
+.key.a { background: var(--red); color: var(--white); }
+.key.b { background: var(--yellow); }
+</style>
+</head>
+<body>
+<div class="console">
+  <div class="skybar">
+    <div class="pixel-cloud c1"></div>
+    <div class="pixel-cloud c2"></div>
+    <div class="pixel-sun"></div>
+  </div>
+
+  <div class="statusbar">
+    <div class="avatar">🧝</div>
+    <div class="stats">
+      <div class="stat-name">LV.99 {{sender_name}} 的旅途</div>
+      <div class="bar hp"><b>HP</b><span class="track"><span class="fill"></span></span></div>
+      <div class="bar mp"><b>MP</b><span class="track"><span class="fill"></span></span></div>
+    </div>
+    <div class="coins">🪙 ×9999</div>
+  </div>
+
+  <div class="dialog">
+    <div class="dialog-tag">✦ 冒险日志</div>
+    <div class="content">{{content}}</div>
+  </div>
+
+  <div class="gamepad">
+    <div class="hint">SAVE {{date}} {{time}} <span class="press">▼ PRESS A TO CONTINUE</span></div>
+    <div class="keys"><span class="key b">B</span><span class="key a">A</span></div>
+  </div>
+</div>
+</body>
+</html>

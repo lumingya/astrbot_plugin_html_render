@@ -1,5 +1,5 @@
 name: astrbot_plugin_html_render
 description: 将 AI 返回的文本内容渲染成精美图片发送，支持多种预设模板、GIF 动画、Markdown 语法，让聊天体验更加丰富多彩。
 author: lumingya
-version: 1.5.0
+version: 1.8.0
 repo: "https://github.com/lumingya/astrbot_plugin_html_render"

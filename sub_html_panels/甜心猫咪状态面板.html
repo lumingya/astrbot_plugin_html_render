@@ -1,0 +1,345 @@
+<style>
+@property --kitty-theme {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f472a8;
+}
+
+.kitty-status-panel {
+  --kitty-pink: #f472a8;
+  --kitty-theme: {{color:theme_color}};
+  --kitty-ink: #81648f;
+  --kitty-muted: #b49ebf;
+  --kitty-line: #ead7ef;
+  --kitty-lavender: #a990d6;
+  --kitty-blue: #86b8e8;
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 18px auto;
+  padding: 18px;
+  color: var(--kitty-ink);
+  background-color: #fffafd;
+  background-image:
+    linear-gradient(45deg, rgba(225, 199, 234, 0.12) 25%, transparent 25%, transparent 75%, rgba(225, 199, 234, 0.12) 75%),
+    linear-gradient(45deg, rgba(244, 114, 168, 0.06) 25%, transparent 25%, transparent 75%, rgba(244, 114, 168, 0.06) 75%);
+  background-position: 0 0, 12px 12px;
+  background-size: 24px 24px;
+  border: 2px solid var(--kitty-line);
+  border-top: 5px solid var(--kitty-theme);
+  border-radius: 8px;
+  box-shadow: 0 16px 38px rgba(116, 83, 132, 0.16), inset 0 0 0 5px rgba(255, 255, 255, 0.82);
+  overflow: hidden;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.kitty-status-panel::before,
+.kitty-status-panel::after {
+  position: absolute;
+  color: var(--kitty-theme);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.kitty-status-panel::before {
+  content: "✦";
+  top: 12px;
+  right: 18px;
+  font-size: 22px;
+  opacity: 0.46;
+}
+
+.kitty-status-panel::after {
+  content: "♡";
+  right: 18px;
+  bottom: 10px;
+  font-size: 34px;
+  opacity: 0.2;
+}
+
+.kitty-status-panel .kitty-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin: -18px -18px 18px;
+  padding: 14px 24px;
+  color: #fff;
+  background: var(--kitty-theme);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.kitty-status-panel .kitty-header__bow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 82px;
+  height: 38px;
+  transform: translate(-50%, -50%);
+}
+
+.kitty-status-panel .kitty-header__bow::before,
+.kitty-status-panel .kitty-header__bow::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  width: 38px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.54);
+  border: 2px solid rgba(255, 255, 255, 0.72);
+}
+
+.kitty-status-panel .kitty-header__bow::before {
+  left: 2px;
+  border-radius: 70% 30% 50% 70%;
+  transform: rotate(10deg);
+}
+
+.kitty-status-panel .kitty-header__bow::after {
+  right: 2px;
+  border-radius: 30% 70% 70% 50%;
+  transform: rotate(-10deg);
+}
+
+.kitty-status-panel .kitty-header__heart {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--kitty-theme);
+  background: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+}
+
+.kitty-status-panel .kitty-profile {
+  padding: 4px 28px 6px;
+}
+
+.kitty-status-panel .kitty-quote {
+  position: relative;
+  margin: 0;
+  padding: 13px 18px 13px 38px;
+  color: var(--kitty-muted);
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid var(--kitty-line);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.kitty-status-panel .kitty-quote::before {
+  content: "“";
+  position: absolute;
+  left: 12px;
+  top: 2px;
+  color: var(--kitty-lavender);
+  font: 700 34px/1 Georgia, serif;
+}
+
+.kitty-status-panel .kitty-section {
+  margin-top: 14px;
+  padding: 16px 18px 18px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--kitty-line);
+  border-radius: 8px;
+}
+
+.kitty-status-panel .kitty-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin: 0 0 15px;
+  color: var(--kitty-ink);
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.kitty-status-panel .kitty-section__title::before {
+  content: "♡";
+  color: var(--kitty-theme);
+  font-size: 19px;
+}
+
+.kitty-status-panel .kitty-section__title small {
+  color: var(--kitty-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.kitty-status-panel .kitty-meter {
+  position: relative;
+}
+
+.kitty-status-panel .kitty-meter__track {
+  height: 24px;
+  padding: 4px;
+  background: #fff;
+  border: 2px solid var(--kitty-line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.kitty-status-panel .kitty-meter__fill {
+  display: block;
+  width: var(--kitty-value);
+  height: 100%;
+  background-color: var(--kitty-theme);
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0 10px, transparent 10px 20px);
+  border-radius: inherit;
+}
+
+.kitty-status-panel .kitty-meter__score {
+  position: absolute;
+  left: min(calc(var(--kitty-value) - 20px), calc(100% - 42px));
+  top: -12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 40px;
+  color: #fff;
+  background: var(--kitty-theme);
+  border: 3px solid #fff;
+  border-radius: 50% 50% 45% 45%;
+  box-shadow: 0 0 0 2px var(--kitty-line);
+  font-size: 13px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.kitty-status-panel .kitty-meter__scale {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 7px;
+  color: var(--kitty-muted);
+  font-size: 9px;
+}
+
+.kitty-status-panel .kitty-reminders {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kitty-status-panel .kitty-reminders li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--kitty-ink);
+  font-size: 12px;
+  line-height: 1.55;
+  text-indent: 0;
+}
+
+.kitty-status-panel .kitty-reminders li::before {
+  content: "🎀";
+  position: static;
+  left: auto;
+  display: block;
+  width: 22px;
+  color: var(--kitty-theme);
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.kitty-status-panel .kitty-reminder__text {
+  grid-column: 2;
+  display: block;
+  min-width: 0;
+  width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.kitty-status-panel .kitty-footer {
+  margin: 18px 6px 2px;
+  padding: 12px 18px;
+  color: var(--kitty-ink);
+  background: rgba(255, 255, 255, 0.86);
+  border-top: 2px solid var(--kitty-theme);
+  border-bottom: 2px solid var(--kitty-line);
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.65;
+  text-align: center;
+}
+
+@media (max-width: 620px) {
+  .kitty-status-panel .kitty-header__bow {
+    display: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .kitty-status-panel {
+    padding: 12px;
+  }
+
+  .kitty-status-panel .kitty-header {
+    margin: -12px -12px 14px;
+    padding-inline: 16px;
+  }
+
+  .kitty-status-panel .kitty-profile,
+  .kitty-status-panel .kitty-section {
+    padding-inline: 10px;
+  }
+
+}
+</style>
+
+<section class="kitty-status-panel" aria-label="{{panel_name}}">
+  <header class="kitty-header">
+    <span>• STATUS •</span>
+    <span class="kitty-header__bow" aria-hidden="true"><span class="kitty-header__heart">♡</span></span>
+  </header>
+
+  <div class="kitty-profile">
+    <blockquote class="kitty-quote">{{value:message}}</blockquote>
+  </div>
+
+  <section class="kitty-section">
+    <h3 class="kitty-section__title">心情值 <small>MOOD</small></h3>
+    <div class="kitty-meter" style="--kitty-value: {{percent:mood}}%">
+      <div class="kitty-meter__track"><span class="kitty-meter__fill"></span></div>
+      <span class="kitty-meter__score">{{value:mood}}%</span>
+      <div class="kitty-meter__scale"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
+    </div>
+  </section>
+
+  <section class="kitty-section">
+    <h3 class="kitty-section__title">好感度 <small>FAVORABILITY</small></h3>
+    <div class="kitty-meter" style="--kitty-value: {{percent:liking}}%">
+      <div class="kitty-meter__track"><span class="kitty-meter__fill"></span></div>
+      <span class="kitty-meter__score">{{value:liking}}%</span>
+      <div class="kitty-meter__scale"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
+    </div>
+  </section>
+
+  <section class="kitty-section">
+    <h3 class="kitty-section__title">小贴士 <small>REMINDERS</small></h3>
+    <ul class="kitty-reminders">
+      <li><span class="kitty-reminder__text">{{value:reminder_1}}</span></li>
+      <li><span class="kitty-reminder__text">{{value:reminder_2}}</span></li>
+      <li><span class="kitty-reminder__text">{{value:reminder_3}}</span></li>
+      <li><span class="kitty-reminder__text">{{value:reminder_4}}</span></li>
+    </ul>
+  </section>
+
+  <footer class="kitty-footer">“ {{value:footer_quote}} ” ♡</footer>
+</section>

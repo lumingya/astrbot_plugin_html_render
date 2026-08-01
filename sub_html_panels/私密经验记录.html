@@ -1,0 +1,283 @@
+<style>
+.intimacy-record {
+  --ir-user-accent: {{color:theme_color}};
+  --ir-accent: var(--ir-user-accent, #df4f91);
+  --ir-mint: #79d2c1;
+  --ir-bg: #160e20;
+  --ir-surface: #21132e;
+  --ir-surface-strong: #2c183b;
+  --ir-line: rgba(180, 124, 207, 0.22);
+  --ir-text: #f5edf7;
+  --ir-muted: #b9a8c0;
+  width: 100%;
+  max-width: 620px;
+  margin: 18px auto;
+  color: var(--ir-text);
+  background: var(--ir-bg);
+  border: 1px solid #493054;
+  border-top: 3px solid var(--ir-accent);
+  border-radius: 6px;
+  box-shadow: 0 16px 38px rgba(16, 8, 24, 0.32);
+  overflow: hidden;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.intimacy-record .ir-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px 17px;
+  background: linear-gradient(135deg, #251330 0%, #1a1024 72%);
+  border-bottom: 1px solid var(--ir-line);
+}
+
+.intimacy-record .ir-kicker {
+  margin: 0 0 5px;
+  color: var(--ir-mint);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.intimacy-record .ir-title {
+  margin: 0;
+  font: 600 22px/1.25 "Noto Serif SC", "Songti SC", serif;
+}
+
+.intimacy-record .ir-updated {
+  color: var(--ir-muted);
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.intimacy-record .ir-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: #1a1024;
+}
+
+.intimacy-record .ir-summary__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--ir-line);
+}
+
+.intimacy-record .ir-summary__item:nth-child(odd) {
+  border-right: 1px solid var(--ir-line);
+}
+
+.intimacy-record .ir-summary__label {
+  color: #d9cde0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.intimacy-record .ir-summary__value,
+.intimacy-record .ir-count__value {
+  color: var(--ir-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.intimacy-record .ir-summary__value {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.intimacy-record .ir-section {
+  padding: 18px 22px 20px;
+}
+
+.intimacy-record .ir-section + .ir-section {
+  border-top: 1px solid #493054;
+}
+
+.intimacy-record .ir-section__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 13px;
+  color: var(--ir-mint);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.intimacy-record .ir-section__title::before {
+  content: "";
+  width: 4px;
+  height: 14px;
+  background: var(--ir-accent);
+}
+
+.intimacy-record .ir-section__title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ir-line);
+}
+
+.intimacy-record .ir-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+}
+
+.intimacy-record .ir-count {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  min-height: 39px;
+  padding: 0 11px 0 7px;
+  background: var(--ir-surface);
+  border-left: 2px solid transparent;
+}
+
+.intimacy-record .ir-count:nth-child(4n + 1),
+.intimacy-record .ir-count:nth-child(4n + 4) {
+  background: var(--ir-surface-strong);
+}
+
+.intimacy-record .ir-count:hover {
+  border-left-color: var(--ir-accent);
+}
+
+.intimacy-record .ir-count__icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  background: #2a776f;
+  border: 1px solid #7cc9ba;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.intimacy-record .ir-count__label {
+  min-width: 0;
+  color: #eee6f1;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.intimacy-record .ir-count__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.intimacy-record .ir-count__unit {
+  color: var(--ir-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.intimacy-record .ir-body-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--ir-line);
+  border-left: 1px solid var(--ir-line);
+}
+
+.intimacy-record .ir-body-state {
+  min-width: 0;
+  min-height: 104px;
+  padding: 13px 14px 15px;
+  background: rgba(36, 21, 48, 0.68);
+  border-right: 1px solid var(--ir-line);
+  border-bottom: 1px solid var(--ir-line);
+}
+
+.intimacy-record .ir-body-state__label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ir-mint);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.intimacy-record .ir-body-state__value {
+  color: #e8dfea;
+  font: 400 12px/1.75 "Noto Serif SC", "Songti SC", serif;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .intimacy-record .ir-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .intimacy-record .ir-updated {
+    white-space: normal;
+  }
+
+  .intimacy-record .ir-summary,
+  .intimacy-record .ir-counts,
+  .intimacy-record .ir-body-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .intimacy-record .ir-summary__item:nth-child(odd) {
+    border-right: 0;
+  }
+
+  .intimacy-record .ir-body-state {
+    min-height: 0;
+  }
+}
+</style>
+
+<section class="intimacy-record" aria-label="{{panel_name}}">
+  <header class="ir-header">
+    <div>
+      <p class="ir-kicker">Private experience record</p>
+      <h2 class="ir-title">{{value:character}}</h2>
+    </div>
+    <time class="ir-updated">更新于 {{updated_at}}</time>
+  </header>
+
+  <div class="ir-summary">
+    <div class="ir-summary__item"><span class="ir-summary__label">淫乱等级</span><span class="ir-summary__value">LV.{{value:corruption_level}}</span></div>
+    <div class="ir-summary__item"><span class="ir-summary__label">淫欲经验</span><span class="ir-summary__value">{{value:corruption_exp}}</span></div>
+    <div class="ir-summary__item"><span class="ir-summary__label">贞操</span><span class="ir-summary__value">{{value:virginity}}</span></div>
+    <div class="ir-summary__item"><span class="ir-summary__label">经历人数</span><span class="ir-summary__value">{{value:partner_count}} 人</span></div>
+  </div>
+
+  <section class="ir-section">
+    <h3 class="ir-section__title">经验记录</h3>
+    <div class="ir-counts">
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">自慰经验</span><span class="ir-count__value">{{value:masturbation_count}}<span class="ir-count__unit">次</span></span></div>
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">性相关服务</span><span class="ir-count__value">{{value:service_count}}<span class="ir-count__unit">次</span></span></div>
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">肛交经验</span><span class="ir-count__value">{{value:anal_count}}<span class="ir-count__unit">次</span></span></div>
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">卖春经验</span><span class="ir-count__value">{{value:prostitution_count}}<span class="ir-count__unit">次</span></span></div>
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">羞耻经验</span><span class="ir-count__value">{{value:shame_count}}<span class="ir-count__unit">次</span></span></div>
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">性交经验</span><span class="ir-count__value">{{value:intercourse_count}}<span class="ir-count__unit">次</span></span></div>
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">浴精经验</span><span class="ir-count__value">{{value:creampie_count}}<span class="ir-count__unit">次</span></span></div>
+      <div class="ir-count"><span class="ir-count__icon">♥</span><span class="ir-count__label">乱交经验</span><span class="ir-count__value">{{value:group_count}}<span class="ir-count__unit">次</span></span></div>
+    </div>
+  </section>
+
+  <section class="ir-section">
+    <h3 class="ir-section__title">身体记录</h3>
+    <div class="ir-body-grid">
+      <div class="ir-body-state"><span class="ir-body-state__label">口部</span><span class="ir-body-state__value">{{value:mouth_state}}</span></div>
+      <div class="ir-body-state"><span class="ir-body-state__label">胸部</span><span class="ir-body-state__value">{{value:chest_state}}</span></div>
+      <div class="ir-body-state"><span class="ir-body-state__label">私处</span><span class="ir-body-state__value">{{value:intimate_state}}</span></div>
+      <div class="ir-body-state"><span class="ir-body-state__label">臀部</span><span class="ir-body-state__value">{{value:hips_state}}</span></div>
+    </div>
+  </section>
+</section>

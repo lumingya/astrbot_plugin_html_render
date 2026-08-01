@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   🖌️ 水墨青韵 · Ink & Celadon
+   宣纸 + 远山 + 朱砂印，一卷立轴小品
+   ============================================================ */
+:root {
+  --w: 520px;
+  --rice: #f6f2e8;
+  --rice-deep: #efe9db;
+  --ink: #2e2a26;
+  --ink-mid: #55504a;
+  --ink-pale: #8d867c;
+  --celadon: #5f7d74;
+  --celadon-deep: #43625a;
+  --cinnabar: #b03a2e;
+  --gold: #a9863f;
+  --font-brush: 'Ma Shan Zheng', 'Kaiti SC', 'STKaiti', 'Noto Serif SC', 'Noto Serif CJK SC', serif;
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'SimSun', serif;
+  --font-body: 'Noto Sans SC', 'Noto Sans CJK SC', "Microsoft YaHei", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  padding: 30px;
+  display: inline-block;
+  background: linear-gradient(170deg, #dcd5c6 0%, #d3cbba 60%, #c9c0ae 100%);
+}
+
+/* ==================== 立轴 ==================== */
+.scroll {
+  width: var(--w);
+  max-width: var(--w);
+  position: relative;
+  background: var(--rice);
+  box-shadow:
+    0 2px 6px rgba(70, 60, 45, .18),
+    0 22px 48px rgba(70, 60, 45, .28);
+}
+
+/* 天头 / 地脚（绫边） */
+.scroll-cap {
+  height: 34px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 8px, transparent 8px 16px),
+    linear-gradient(180deg, #3f4c52, #334046);
+  position: relative;
+}
+.scroll-cap.bottom { background: linear-gradient(0deg, #3f4c52, #334046); }
+.scroll-cap::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(180deg, #8f7a4d, #c2a86a 50%, #8f7a4d);
+}
+.scroll-cap.top::after { bottom: 0; }
+.scroll-cap.bottom::after { top: 0; }
+
+/* 纸面 */
+.paper {
+  position: relative;
+  padding: 30px 32px 26px;
+  overflow: hidden;
+  background:
+    radial-gradient(420px 300px at 92% 0%, rgba(95, 125, 116, .10), transparent 60%),
+    var(--rice);
+}
+
+/* 宣纸纹理 */
+.paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* 远山（底部水墨山影） */
+.mountains {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 150px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .5;
+}
+
+/* 墨晕（右上） */
+.ink-blot {
+  position: absolute;
+  top: -70px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(46, 42, 38, .16), rgba(46, 42, 38, .05) 55%, transparent 70%);
+  filter: blur(2px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ==================== 题字区 ==================== */
+.head {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.head-title {
+  font-family: var(--font-brush);
+  font-size: 34px;
+  letter-spacing: 6px;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.head-title small {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 5px;
+  color: var(--ink-pale);
+  margin-top: 4px;
+}
+
+/* 竖排引言 */
+.head-vertical {
+  writing-mode: vertical-rl;
+  font-family: var(--font-brush);
+  font-size: 15px;
+  letter-spacing: 4px;
+  line-height: 1;
+  color: var(--celadon-deep);
+  height: 118px;
+  padding: 10px 7px;
+  flex-shrink: 0;
+  border-left: 1px solid rgba(95, 125, 116, .35);
+  border-right: 1px solid rgba(95, 125, 116, .35);
+  background: rgba(95, 125, 116, .06);
+}
+
+/* 朱砂印 */
+.seal {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #c04638, var(--cinnabar));
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  transform: rotate(4deg);
+  box-shadow: inset 0 0 0 2px rgba(255, 235, 220, .35), 0 2px 6px rgba(120, 40, 30, .35);
+  opacity: .88;
+}
+.seal span {
+  font-family: var(--font-brush);
+  color: #f8ece0;
+  font-size: 17px;
+  line-height: 1.05;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+/* ==================== 正文 ==================== */
+.content {
+  position: relative;
+  z-index: 2;
+  font-size: 15.5px;
+  line-height: 2.2;
+  width: 100%;
+  max-width: 100%;
+  text-align: justify;
+}
+.content, .content * {
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box !important;
+}
+
+.content p { margin-bottom: .9em; text-indent: 2em; }
+.content p:last-child { margin-bottom: 0; }
+
+.content > p:first-child { text-indent: 0; }
+.content > p:first-child::first-letter {
+  float: left;
+  font-family: var(--font-brush);
+  font-size: 3.1em;
+  line-height: .92;
+  padding: 5px 10px 0 0;
+  color: var(--celadon-deep);
+}
+
+/* ==================== 标题 ==================== */
+.content h1, .content h2, .content h3, .content h4 {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  color: var(--ink);
+  text-indent: 0;
+  line-height: 1.55;
+  margin: 1.2em 0 .55em;
+}
+.content h1 {
+  font-size: 29px;
+  text-align: center;
+  letter-spacing: 5px;
+}
+.content h1::after {
+  content: "";
+  display: block;
+  width: 130px;
+  height: 8px;
+  margin: 8px auto 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='8' viewBox='0 0 130 8'%3E%3Cpath d='M2 5 Q 30 1, 65 4 T 128 3' stroke='%23b03a2e' stroke-width='2.4' fill='none' stroke-linecap='round' opacity='.75'/%3E%3C/svg%3E") no-repeat center;
+}
+.content h2 {
+  font-size: 24px;
+  letter-spacing: 3px;
+  padding-left: 14px;
+  border-left: 5px solid var(--celadon);
+}
+.content h3 { font-size: 20px; color: var(--celadon-deep); letter-spacing: 2px; }
+.content h3::before { content: "◈ "; color: var(--cinnabar); font-size: .75em; }
+.content h4 { font-size: 16.5px; font-family: var(--font-serif); font-weight: 700; color: var(--ink-mid); }
+
+/* ==================== 语义标签 ==================== */
+q {
+  display: inline;
+  quotes: none;
+  color: var(--cinnabar);
+  font-weight: 500;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+q::before { content: "「"; color: var(--gold); font-weight: 700; }
+q::after  { content: "」"; color: var(--gold); font-weight: 700; }
+
+inner {
+  display: inline;
+  color: var(--ink-pale);
+  font-style: normal;
+  font-size: .93em;
+  padding: 0 3px;
+  border-bottom: 1px dotted rgba(141, 134, 124, .7);
+}
+inner::before { content: "（"; opacity: .55; }
+inner::after  { content: "）"; opacity: .55; }
+
+act {
+  display: inline;
+  color: var(--celadon-deep);
+  font-weight: 600;
+  padding: 0 2px;
+  background: linear-gradient(transparent 68%, rgba(95, 125, 116, .22) 68%);
+}
+
+scene {
+  display: block;
+  margin: 1.3em 0;
+  padding: 14px 18px;
+  text-indent: 0;
+  color: #4c5a52;
+  background: linear-gradient(90deg, rgba(95, 125, 116, .12), rgba(95, 125, 116, .03));
+  border-left: 3px solid var(--celadon);
+  position: relative;
+}
+scene::before {
+  content: "景";
+  position: absolute;
+  top: -9px;
+  left: 12px;
+  font-family: var(--font-brush);
+  font-size: 12px;
+  color: var(--rice);
+  background: var(--celadon);
+  padding: 1px 7px 2px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+aside {
+  display: block;
+  width: fit-content;
+  max-width: 88%;
+  margin: 1.3em auto;
+  text-align: center;
+  text-indent: 0;
+  font-family: var(--font-brush);
+  font-size: 1.08em;
+  color: var(--ink-mid);
+  letter-spacing: 2px;
+}
+aside::before { content: "❖ "; color: var(--cinnabar); font-size: .75em; }
+aside::after  { content: " ❖"; color: var(--cinnabar); font-size: .75em; }
+
+/* ==================== 常规元素 ==================== */
+.content blockquote {
+  margin: 1.2em 0;
+  padding: 13px 18px;
+  text-indent: 0;
+  color: var(--ink-mid);
+  background: rgba(46, 42, 38, .045);
+  border-left: 3px solid var(--ink-pale);
+  font-family: var(--font-serif);
+}
+.content blockquote p { text-indent: 0; margin-bottom: .4em; }
+.content blockquote p:last-child { margin-bottom: 0; }
+
+.content ul, .content ol { margin: .9em 0 .9em 1.5em; padding-left: .4em; text-indent: 0; }
+.content li { margin-bottom: .4em; }
+.content ul li::marker { color: var(--celadon); content: "❋ "; font-size: .85em; }
+.content ol li::marker { color: var(--cinnabar); font-weight: 700; }
+
+.content hr {
+  border: none;
+  height: 24px;
+  margin: 1.2em 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='456' height='10' viewBox='0 0 456 10'%3E%3Cpath d='M4 6 Q 120 1, 228 5 T 452 4' stroke='%232e2a26' stroke-width='1.6' fill='none' stroke-linecap='round' opacity='.35'/%3E%3C/svg%3E") no-repeat center;
+}
+
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: .87em;
+  color: var(--celadon-deep);
+  background: rgba(95, 125, 116, .12);
+  border-radius: 3px;
+  padding: 1px 6px;
+  white-space: pre-wrap !important;
+}
+.content pre {
+  margin: 1.1em 0;
+  padding: 15px 17px;
+  background: #2b2f2c;
+  color: #d9ded4;
+  border-radius: 4px;
+  border-left: 4px solid var(--celadon);
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  text-indent: 0;
+}
+.content pre code { background: none; padding: 0; color: inherit; }
+
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2em 0;
+  font-size: .92em;
+  table-layout: fixed;
+  text-indent: 0;
+  border: 1px solid rgba(46, 42, 38, .3);
+}
+.content th, .content td {
+  padding: 9px 12px;
+  border: 1px solid rgba(46, 42, 38, .22);
+  text-align: left;
+}
+.content th {
+  background: rgba(95, 125, 116, .16);
+  color: var(--celadon-deep);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.content tr:nth-child(even) td { background: rgba(46, 42, 38, .03); }
+
+.content strong {
+  color: var(--cinnabar);
+  font-weight: 700;
+}
+.content em { color: var(--celadon-deep); font-style: italic; }
+.content del { color: var(--ink-pale); }
+.content a { color: var(--celadon-deep); text-decoration: underline dotted; text-underline-offset: 3px; }
+.content img { max-width: 100%; height: auto; margin: .5em 0; border: 1px solid rgba(46,42,38,.25); padding: 4px; background: #fff; }
+
+.content details {
+  margin: 1.1em 0;
+  border: 1px solid rgba(46, 42, 38, .25);
+  background: rgba(255, 255, 255, .4);
+  text-indent: 0;
+}
+.content summary {
+  padding: 10px 15px;
+  font-weight: 700;
+  color: var(--celadon-deep);
+  background: rgba(95, 125, 116, .1);
+  cursor: pointer;
+}
+.content summary::before { content: "卷 · "; font-family: var(--font-brush); color: var(--cinnabar); }
+.content details > *:not(summary) { padding: 10px 15px; text-indent: 0; }
+
+/* ==================== 落款 ==================== */
+.foot {
+  position: relative;
+  z-index: 2;
+  margin-top: 22px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(46, 42, 38, .18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ink-pale);
+  letter-spacing: 2px;
+}
+.foot .brush { font-family: var(--font-brush); font-size: 14px; color: var(--ink-mid); }
+.foot-right { display: flex; align-items: center; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="scroll">
+  <div class="scroll-cap top"></div>
+  <div class="paper">
+    <div class="ink-blot"></div>
+
+    <div class="head">
+      <div class="head-title">水墨青韵<small>INK · CELADON</small></div>
+      <div class="head-vertical">书不尽言</div>
+    </div>
+
+    <div class="content">{{content}}</div>
+
+    <div class="foot">
+      <span class="brush">笔墨随心</span>
+      <div class="foot-right">
+        <span>{{date}} 记</span>
+        <div class="seal"><span>青<br>韵</span></div>
+      </div>
+    </div>
+
+    <svg class="mountains" viewBox="0 0 520 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,150 L0,96 Q60,54 120,88 Q160,106 210,84 Q280,52 330,92 Q380,122 440,96 Q490,76 520,92 L520,150 Z" fill="#5f7d74" opacity=".12"/>
+      <path d="M0,150 L0,118 Q80,84 150,112 Q230,140 300,112 Q370,86 430,116 Q480,138 520,122 L520,150 Z" fill="#3d4a46" opacity=".14"/>
+      <path d="M0,150 L0,134 Q110,110 220,132 Q330,152 520,130 L520,150 Z" fill="#2e2a26" opacity=".16"/>
+    </svg>
+  </div>
+  <div class="scroll-cap bottom"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<style>
+.backstage-whisper {
+  --bw-theme: {{color:theme_color}};
+  --bw-theme-soft: color-mix(in srgb, var(--bw-theme) 18%, transparent);
+  --bw-theme-line: color-mix(in srgb, var(--bw-theme) 42%, transparent);
+  --bw-bg-deep: #1e1b4b;
+  --bw-bg-mid: #31206f;
+  --bw-text: #f3e8ff;
+  --bw-text-soft: #d8c8ed;
+  width: min(100%, 720px);
+  margin: 20px auto;
+  color: var(--bw-text);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.backstage-whisper details {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--bw-theme-line);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bw-theme) 34%, var(--bw-bg-deep)) 0%, var(--bw-bg-deep) 58%, #17133b 100%);
+  box-shadow:
+    0 8px 30px color-mix(in srgb, var(--bw-theme) 20%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bw-theme) 22%, transparent);
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+
+.backstage-whisper details[open] {
+  border-color: color-mix(in srgb, var(--bw-theme) 70%, transparent);
+  box-shadow:
+    0 12px 36px color-mix(in srgb, var(--bw-theme) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bw-theme) 30%, transparent);
+}
+
+.backstage-whisper summary {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px;
+  color: var(--bw-text);
+  background: linear-gradient(90deg, var(--bw-theme-soft), transparent 76%);
+  cursor: pointer;
+  list-style: none;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  user-select: none;
+}
+
+.backstage-whisper summary::-webkit-details-marker,
+.backstage-whisper summary::marker {
+  display: none;
+}
+
+.backstage-whisper summary::before {
+  content: "🎭";
+  flex: 0 0 auto;
+  font-size: 1.25em;
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--bw-theme) 85%, transparent));
+}
+
+.backstage-whisper summary::after {
+  content: "展开独白 ▶";
+  margin-left: auto;
+  color: var(--bw-text-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.backstage-whisper details[open] summary::after {
+  content: "收起 ▼";
+}
+
+.backstage-whisper summary:hover {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--bw-theme) 28%, transparent), transparent 76%);
+}
+
+.backstage-whisper .bw-content {
+  position: relative;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 16px 22px 20px;
+  border-top: 1px solid color-mix(in srgb, var(--bw-theme) 24%, transparent);
+  color: var(--bw-text-soft);
+  background: color-mix(in srgb, var(--bw-bg-deep) 82%, var(--bw-theme) 18%);
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  animation: bw-rise .3s ease both;
+}
+
+.backstage-whisper .bw-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.backstage-whisper .bw-content::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--bw-bg-deep) 86%, var(--bw-theme) 14%);
+}
+
+.backstage-whisper .bw-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bw-theme) 38%, transparent);
+}
+
+.backstage-whisper .bw-content::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--bw-theme) 58%, transparent);
+}
+
+.backstage-whisper[data-theme="light"] {
+  --bw-bg-deep: #f6f2fb;
+  --bw-bg-mid: #eee6fa;
+  --bw-text: #38264f;
+  --bw-text-soft: #634e75;
+}
+
+.backstage-whisper[data-theme="light"] details {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--bw-theme) 20%, #ffffff) 0%, var(--bw-bg-deep) 64%, #eee7f7 100%);
+}
+
+.backstage-whisper[data-theme="light"] .bw-content {
+  background: color-mix(in srgb, #ffffff 82%, var(--bw-theme) 18%);
+}
+
+.backstage-whisper[data-theme="soft"] {
+  --bw-bg-deep: #302641;
+  --bw-bg-mid: #46335e;
+  --bw-text: #f4edf9;
+  --bw-text-soft: #d8c9e1;
+}
+
+@keyframes bw-rise {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 460px) {
+  .backstage-whisper {
+    margin: 14px 0;
+  }
+
+  .backstage-whisper summary,
+  .backstage-whisper .bw-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+</style>
+
+<section class="backstage-whisper" data-theme="{{token:theme_mode}}" aria-label="{{panel_name}}">
+  <details open>
+    <summary>幕后心声</summary>
+    <div class="bw-content">{{value:content}}</div>
+  </details>
+</section>

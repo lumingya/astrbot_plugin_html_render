@@ -11,17 +11,713 @@
         "default": true,
         "hint": "在 LLM 请求时注入 HTML 渲染使用说明"
     },
+    "sub_html_panels": {
+        "type": "template_list",
+        "description": "子 HTML 面板与行内模板",
+        "hint": "可添加状态面板或行内子模板。行内子模板可在正文任意位置重复插入并混用；AI 只输出简短 JSON，插件负责套用预制 HTML。",
+        "templates": {
+            "default": {
+                "name": "自定义子 HTML 面板",
+                "hint": "定义一个可单独启停的结构化状态面板",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "启用",
+                        "default": true,
+                        "hint": "启用后才会向 AI 注入此面板的字段协议并解析对应输出"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "面板名称",
+                        "default": "角色状态栏",
+                        "hint": "用于配置页、日志和 AI 提示词中的易读名称"
+                    },
+                    "panel_id": {
+                        "type": "string",
+                        "description": "面板 ID",
+                        "default": "character_status",
+                        "hint": "固定输出标签中的唯一 ID；以字母开头，只能使用字母、数字、下划线和短横线"
+                    },
+                    "description": {
+                        "type": "text",
+                        "description": "用途说明",
+                        "default": "记录当前角色状态",
+                        "hint": "会暴露给 AI，用于说明何时以及如何填写此面板"
+                    },
+                    "panel_mode": {
+                        "type": "string",
+                        "description": "渲染模式",
+                        "default": "stateful",
+                        "hint": "状态面板会按 ID 去重并保留最近状态；行内子模板可重复使用，并在标签出现的位置原地插入",
+                        "options": [
+                            "stateful",
+                            "inline"
+                        ],
+                        "enum": [
+                            "stateful",
+                            "inline"
+                        ],
+                        "labels": [
+                            "状态面板",
+                            "行内子模板（可重复）"
+                        ]
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "输出时机",
+                        "default": "when_relevant",
+                        "hint": "“每次回复”会强制每轮展示；主模型漏掉标签时，插件会独立请求一次补全，仍失败则沿用最近状态。其他模式由 AI 按时机选择",
+                        "options": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "enum": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "labels": [
+                            "每次回复",
+                            "模型按需（推荐）",
+                            "状态变化时"
+                        ]
+                    },
+                    "fields": {
+                        "type": "list",
+                        "description": "字段规范",
+                        "default": [
+                            "name|名称|text|当前名称",
+                            "progress|进度|percent|0 到 100 的数值"
+                        ],
+                        "hint": "格式：字段键|显示名|类型|说明|选项。类型支持 text、number、percent、boolean、choice、color、image；image 从 avatars 文件夹安全读取"
+                    },
+                    "empty_value": {
+                        "type": "string",
+                        "description": "空值显示",
+                        "default": "未记录",
+                        "hint": "AI 漏填字段或数值无效时显示的文字"
+                    },
+                    "template_file": {
+                        "type": "string",
+                        "description": "HTML 模板文件",
+                        "default": "sub_html_panels/自定义面板.html",
+                        "hint": "相对于插件目录的 .html 文件路径。支持 {{value:字段}}、{{percent:字段}}、{{token:字段}}、{{color:字段}}、{{image:字段}} 和面板元数据占位符"
+                    },
+                    "html_template": {
+                        "type": "text",
+                        "description": "自定义 HTML（可选）",
+                        "default": "",
+                        "hint": "填写后覆盖模板文件。CSS 必须限定在面板自身类名下；AI 数据会先转义再替换占位符"
+                    }
+                }
+            },
+            "avatar_dialogue": {
+                "name": "头像对话",
+                "hint": "可在任意主模板正文中重复插入的角色头像对话框",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "启用",
+                        "default": true,
+                        "hint": "启用后向 AI 暴露头像对话字段协议并原地展开"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "模板名称",
+                        "default": "头像对话",
+                        "hint": "用于配置页、日志和 AI 提示词中的易读名称"
+                    },
+                    "panel_id": {
+                        "type": "string",
+                        "description": "模板 ID",
+                        "default": "avatar_dialogue",
+                        "hint": "固定输出标签中的唯一 ID"
+                    },
+                    "panel_mode": {
+                        "type": "string",
+                        "description": "渲染模式",
+                        "default": "inline",
+                        "options": ["inline"],
+                        "enum": ["inline"],
+                        "labels": ["行内子模板（可重复）"],
+                        "hint": "头像对话始终在标签所在位置原地插入，同一回复可以重复使用"
+                    },
+                    "description": {
+                        "type": "text",
+                        "description": "用途说明",
+                        "default": "在剧情或普通回复中需要角色说话时使用。标签写在台词应出现的位置；同一回复可以混用多个子模板，也可以重复使用本模板。",
+                        "hint": "会暴露给 AI，用于说明何时使用头像对话"
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "输出时机",
+                        "default": "when_relevant",
+                        "options": ["when_relevant", "always"],
+                        "enum": ["when_relevant", "always"],
+                        "labels": ["模型按需（推荐）", "每次回复至少一次"],
+                        "hint": "模型按需：仅在角色对话适合使用头像框时输出；每次回复至少一次：每轮至少输出一个头像对话，可在一轮中重复多次"
+                    },
+                    "fields": {
+                        "type": "list",
+                        "description": "字段规范",
+                        "default": [
+                            "accent|强调色|color|与当前主模板协调的边框和姓名颜色",
+                            "avatar|头像|image|从 avatars 文件夹选择与角色对应的图片文件名",
+                            "name|角色名|text|当前说话角色的姓名或称呼",
+                            "speech|台词|text|角色说出的内容，不要自行添加引号",
+                            "inner|内心活动|text|可选；角色未说出口的想法，没有则留空"
+                        ],
+                        "hint": "头像字段使用 image 类型，只能引用 avatars 文件夹中的 png、jpg、jpeg、webp 或 gif"
+                    },
+                    "empty_value": {
+                        "type": "string",
+                        "description": "空值显示",
+                        "default": "",
+                        "hint": "可选字段为空时不显示占位文字"
+                    },
+                    "template_file": {
+                        "type": "string",
+                        "description": "HTML 模板文件",
+                        "default": "sub_html_panels/头像对话.html",
+                        "hint": "局部 HTML 模板，不包含 html、body 或页面背景"
+                    },
+                    "html_template": {
+                        "type": "text",
+                        "description": "自定义 HTML（可选）",
+                        "default": "",
+                        "hint": "填写后覆盖内置模板文件；CSS 必须限定在组件自身类名下"
+                    }
+                }
+            },
+            "cat_status": {
+                "name": "甜心猫咪状态面板",
+                "hint": "粉色角色资料、心情与好感度面板，支持自定义主题色",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "启用",
+                        "default": true,
+                        "hint": "启用后向 AI 注入猫咪状态面板字段协议并解析对应输出"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "面板名称",
+                        "default": "甜心猫咪状态面板",
+                        "hint": "用于配置页、日志和 AI 提示词中的易读名称"
+                    },
+                    "panel_id": {
+                        "type": "string",
+                        "description": "面板 ID",
+                        "default": "cat_status",
+                        "hint": "猫咪状态面板的固定唯一 ID"
+                    },
+                    "description": {
+                        "type": "text",
+                        "description": "用途说明",
+                        "default": "可爱柔和的角色状态面板。仅在需要展示角色短句、心情、好感度或互动提醒时输出；数值应随剧情逐步变化。",
+                        "hint": "会暴露给 AI，用于说明何时以及如何填写此面板"
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "输出时机",
+                        "default": "when_relevant",
+                        "hint": "“每次回复”会强制每轮展示；主模型漏掉标签时，插件会独立请求一次补全，仍失败则沿用最近状态。其他模式由 AI 按时机选择",
+                        "options": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "enum": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "labels": [
+                            "每次回复",
+                            "模型按需（推荐）",
+                            "状态变化时"
+                        ]
+                    },
+                    "fields": {
+                        "type": "list",
+                        "description": "字段规范",
+                        "default": [
+                            "theme_color|主色调|color|自定义主题色；无特殊要求时填写默认粉色 #f472a8",
+                            "message|此刻想说|text|角色此刻最想说的一句短话",
+                            "mood|心情值|percent|0 到 100 的整数",
+                            "liking|喜欢|percent|0 到 100 的整数",
+                            "reminder_1|提醒一|text|符合角色性格的第一条互动提醒",
+                            "reminder_2|提醒二|text|符合角色性格的第二条互动提醒",
+                            "reminder_3|提醒三|text|符合角色性格的第三条互动提醒",
+                            "reminder_4|提醒四|text|符合角色性格的第四条互动提醒",
+                            "footer_quote|底部寄语|text|一句简短、有角色感的结尾寄语"
+                        ],
+                        "hint": "可按需调整字段说明；字段键应与模板占位符保持一致"
+                    },
+                    "empty_value": {
+                        "type": "string",
+                        "description": "空值显示",
+                        "default": "未记录",
+                        "hint": "AI 漏填字段或数值无效时显示的文字"
+                    },
+                    "template_file": {
+                        "type": "string",
+                        "description": "HTML 模板文件",
+                        "default": "sub_html_panels/甜心猫咪状态面板.html",
+                        "hint": "内置猫咪状态面板模板文件，支持 theme_color 自定义主色"
+                    },
+                    "html_template": {
+                        "type": "text",
+                        "description": "自定义 HTML（可选）",
+                        "default": "",
+                        "hint": "填写后覆盖内置模板文件"
+                    }
+                }
+            },
+            "character_overview": {
+                "name": "角色状态总览",
+                "hint": "手机端紧凑状态总览，保留外观、着装与情欲记录，支持日间/柔和/夜间主题",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "启用",
+                        "default": false,
+                        "hint": "启用后向 AI 注入角色状态总览字段协议并解析对应输出"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "面板名称",
+                        "default": "角色状态总览",
+                        "hint": "用于配置页、日志和 AI 提示词中的易读名称"
+                    },
+                    "panel_id": {
+                        "type": "string",
+                        "description": "面板 ID",
+                        "default": "character_overview",
+                        "hint": "角色状态总览面板的固定唯一 ID"
+                    },
+                    "description": {
+                        "type": "text",
+                        "description": "用途说明",
+                        "default": "手机端紧凑的角色状态总览。仅填写当前着装与情欲状态；没有变化时沿用最近状态。",
+                        "hint": "会暴露给 AI，用于说明何时以及如何填写此面板"
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "输出时机",
+                        "default": "when_relevant",
+                        "hint": "“每次回复”会强制每轮展示；其他模式由 AI 按时机选择",
+                        "options": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "enum": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "labels": [
+                            "每次回复",
+                            "模型按需（推荐）",
+                            "状态变化时"
+                        ]
+                    },
+                    "fields": {
+                        "type": "list",
+                        "description": "字段规范",
+                        "default": [
+                            "theme_color|主色调|color|按当前情境选择不刺眼的十六进制主题色；无特殊要求时使用柔和粉色 #d982a4",
+                            "theme_mode|色调模式|choice|根据环境选择日间、柔和或夜间配色|light=日间,soft=柔和,night=夜间",
+                            "character|角色|text|当前状态所属角色的姓名或称呼",
+                            "outfit_top|上装|text|当前上装与穿着状态",
+                            "outfit_bottom|下装|text|当前下装与穿着状态",
+                            "outfit_toy|性玩具|text|当前性玩具；无则写无",
+                            "arousal|性欲|percent|0 到 100 的整数",
+                            "depravity|堕落值|percent|0 到 100 的整数",
+                            "depravity_level|堕落等级|number|当前堕落等级",
+                            "total_exposure|总暴露值|number|当前总暴露值",
+                            "womb_semen|宫内精液|text|当前宫内精液量或状态",
+                            "anal_semen|肛门精液|text|当前肛门精液量或状态",
+                            "arousal_fluid|淫水数量|text|当前淫水数量或状态",
+                            "external_semen|外部痕迹|text|外部精液痕迹；无则写无"
+                        ],
+                        "hint": "字段键应与模板占位符保持一致；长文本请尽量简短，方便手机端阅读"
+                    },
+                    "empty_value": {
+                        "type": "string",
+                        "description": "空值显示",
+                        "default": "未记录",
+                        "hint": "AI 漏填字段或数值无效时显示的文字"
+                    },
+                    "template_file": {
+                        "type": "string",
+                        "description": "HTML 模板文件",
+                        "default": "sub_html_panels/角色状态总览.html",
+                        "hint": "内置手机端角色状态总览模板，支持 theme_color 与 theme_mode"
+                    },
+                    "html_template": {
+                        "type": "text",
+                        "description": "自定义 HTML（可选）",
+                        "default": "",
+                        "hint": "填写后覆盖内置模板文件"
+                    }
+                }
+            },
+            "intimacy_record": {
+                "name": "私密经验记录",
+                "hint": "深紫游戏菜单风格的经验统计与四部位文字记录，保留图二红框中的经验项目",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "启用",
+                        "default": false,
+                        "hint": "启用后向 AI 注入私密经验记录字段协议并解析对应输出"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "面板名称",
+                        "default": "私密经验记录",
+                        "hint": "用于配置页、日志和 AI 提示词中的易读名称"
+                    },
+                    "panel_id": {
+                        "type": "string",
+                        "description": "面板 ID",
+                        "default": "intimacy_record",
+                        "hint": "私密经验记录面板的固定唯一 ID"
+                    },
+                    "description": {
+                        "type": "text",
+                        "description": "用途说明",
+                        "default": "记录角色的私密经验次数与四个主要身体部位的文字状态。仅保留经验统计，不包含圣性、妊娠、露出抗性和孩子数量。",
+                        "hint": "会暴露给 AI，用于说明何时以及如何填写此面板"
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "输出时机",
+                        "default": "when_relevant",
+                        "hint": "“每次回复”会强制每轮展示；其他模式由 AI 按时机选择",
+                        "options": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "enum": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "labels": [
+                            "每次回复",
+                            "模型按需（推荐）",
+                            "状态变化时"
+                        ]
+                    },
+                    "fields": {
+                        "type": "list",
+                        "description": "字段规范",
+                        "default": [
+                            "theme_color|主色调|color|可选的十六进制主题色；无特殊要求时使用粉紫色 #df4f91",
+                            "character|角色|text|当前状态所属角色的姓名或称呼",
+                            "corruption_level|淫乱等级|number|顶部概览中的等级数值",
+                            "corruption_exp|淫欲经验|number|顶部概览中的经验数值",
+                            "virginity|贞操|text|当前贞操状态",
+                            "partner_count|经历人数|number|有过相关经历的人数",
+                            "masturbation_count|自慰经验|number|自慰经验次数",
+                            "service_count|性相关服务|number|性相关服务次数",
+                            "anal_count|肛交经验|number|肛交经验次数",
+                            "prostitution_count|卖春经验|number|卖春经验次数",
+                            "shame_count|羞耻经验|number|羞耻经验次数",
+                            "intercourse_count|性交经验|number|性交经验次数",
+                            "creampie_count|浴精经验|number|浴精经验次数",
+                            "group_count|乱交经验|number|乱交经验次数",
+                            "mouth_state|口部|text|口部外观、状态或敏感度的简短文字描述",
+                            "chest_state|胸部|text|胸部外观、状态或敏感度的简短文字描述",
+                            "intimate_state|私处|text|私处外观、状态或敏感度的简短文字描述",
+                            "hips_state|臀部|text|臀部外观、状态或敏感度的简短文字描述"
+                        ],
+                        "hint": "字段键应与模板占位符保持一致；次数填写非负数，身体记录填写简短句子"
+                    },
+                    "empty_value": {
+                        "type": "string",
+                        "description": "空值显示",
+                        "default": "未记录",
+                        "hint": "AI 漏填字段或数值无效时显示的文字"
+                    },
+                    "template_file": {
+                        "type": "string",
+                        "description": "HTML 模板文件",
+                        "default": "sub_html_panels/私密经验记录.html",
+                        "hint": "内置深紫游戏菜单风格模板，支持 theme_color 自定义主色"
+                    },
+                    "html_template": {
+                        "type": "text",
+                        "description": "自定义 HTML（可选）",
+                        "default": "",
+                        "hint": "填写后覆盖内置模板文件"
+                    }
+                }
+            },
+            "backstage_whisper": {
+                "name": "幕后心声吐槽面板",
+                "hint": "紫色舞台帘幕风格的折叠吐槽小剧场，支持日间、柔和与夜间模式及自定义主题色",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "启用",
+                        "default": false,
+                        "hint": "启用后向 AI 注入幕后心声字段协议并解析对应输出"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "面板名称",
+                        "default": "幕后心声吐槽面板",
+                        "hint": "用于配置页、日志和 AI 提示词中的易读名称"
+                    },
+                    "panel_id": {
+                        "type": "string",
+                        "description": "面板 ID",
+                        "default": "backstage_whisper",
+                        "hint": "幕后心声面板的固定唯一 ID"
+                    },
+                    "description": {
+                        "type": "text",
+                        "description": "用途说明与生成规则",
+                        "default": "在 <content> 标签之后，必须输出一个幕后吐槽小剧场。小剧场与正文完全隔离，只写 2-4 轮对话。秋青子是用户的专属秘书，温柔但犀利，只称呼用户为“哥哥”，偶尔撒娇并提到蛇娘特征（信子、体温、好冷想要哥哥的体温）。不要在开头写拿茶、点心或零食的动作，直接进入吐槽。优先和正文中的女性角色对话；没有女性角色时才和用户（哥哥）对话；不出现其他男性角色。“哥哥”只能指用户。角色可以抱怨人设、吐槽剧情、跳出角色说真话或向秋青子求助。小剧场不影响正式剧情，不透露用户不知道的隐藏信息；秋青子温柔专业，不批评哥哥，对女性角色可亲密互动，对哥哥可撒娇。输出 content 字段时只写对话文本，不要重复 <details>、<summary> 标签。",
+                        "hint": "这段说明会直接注入 AI 提示词；可按需改写角色身份、对话对象与禁用规则"
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "输出时机",
+                        "default": "always",
+                        "hint": "启用后每次回复都追加幕后小剧场；也可改为模型按需或状态变化时",
+                        "options": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "enum": [
+                            "always",
+                            "when_relevant",
+                            "on_change"
+                        ],
+                        "labels": [
+                            "每次回复",
+                            "模型按需（推荐）",
+                            "状态变化时"
+                        ]
+                    },
+                    "fields": {
+                        "type": "list",
+                        "description": "字段规范",
+                        "default": [
+                            "theme_color|主题色|color|允许模型根据主模板、白天或夜间环境选择不刺眼的十六进制颜色；无特殊要求时使用柔和紫色 #8b5cf6",
+                            "theme_mode|色调模式|choice|根据阅读环境选择配色|light=日间,soft=柔和,night=夜间",
+                            "content|吐槽内容|text|直接输出 2-4 轮秋青子与角色（或用户）的对话；不要加 Markdown 代码块，不要重复 details 标签"
+                        ],
+                        "hint": "content 会自动转义并保留换行，折叠容器由模板负责生成"
+                    },
+                    "empty_value": {
+                        "type": "string",
+                        "description": "空值显示",
+                        "default": "暂时没有幕后心声",
+                        "hint": "AI 漏填吐槽内容时显示的文字"
+                    },
+                    "template_file": {
+                        "type": "string",
+                        "description": "HTML 模板文件",
+                        "default": "sub_html_panels/幕后心声.html",
+                        "hint": "紫色折叠幕后心声模板，支持 theme_color 与 theme_mode"
+                    },
+                    "html_template": {
+                        "type": "text",
+                        "description": "自定义 HTML（可选）",
+                        "default": "",
+                        "hint": "填写后覆盖内置模板文件；CSS 必须限定在面板自身类名下"
+                    }
+                }
+            }
+        },
+        "default": [
+            {
+                "enabled": true,
+                "name": "R18 沉浸状态栏",
+                "panel_id": "r18_status",
+                "description": "成人角色扮演场景的私密状态记录。根据当前剧情如实填写身体状态、关系与目标；没有变化时沿用上下文中的最近状态，不要凭空制造突变。",
+                "output_mode": "when_relevant",
+                "fields": [
+                    "mode|模式|choice|根据当前剧情选择状态栏模式|punishment=惩罚模式,rescue=救赎模式",
+                    "theme_color|主色调|color|由 AI 按当前模式选择面板主色调，只填 #RGB 或 #RRGGBB",
+                    "character|角色|text|当前状态所属角色的姓名或称呼",
+                    "affection|好感度|percent|0 到 100 的整数",
+                    "arousal|情欲|percent|0 到 100 的整数",
+                    "current_goal|当前目标|text|角色此刻最直接的目标",
+                    "chest|胸部|text|外观、触感或敏感状态的简短描述",
+                    "nipples|乳首|text|外观与敏感状态的简短描述",
+                    "clothing|着装|text|当前衣着与完整程度",
+                    "pose|姿态|text|当前姿势或动作",
+                    "lower_body|下体|text|当前私密部位状态的简短描述",
+                    "womb|子宫|text|内部感受或状态，无相关信息时写平静",
+                    "thighs|大腿|text|姿态、触感或痕迹",
+                    "feet|足部|text|赤足、鞋袜、姿态或触感",
+                    "condition|整体状态|text|体力、情绪与身体反应概括",
+                    "relationship|关系|text|与对话对象的当前关系或态度"
+                ],
+                "empty_value": "未记录",
+                "template_file": "sub_html_panels/R18沉浸状态栏.html",
+                "html_template": "",
+                "__template_key": "default"
+            },
+            {
+                "enabled": false,
+                "name": "角色状态总览",
+                "panel_id": "character_overview",
+                "description": "手机端紧凑的角色状态总览。仅填写当前着装与情欲状态；没有变化时沿用最近状态。",
+                "output_mode": "when_relevant",
+                "fields": [
+                    "theme_color|主色调|color|按当前情境选择不刺眼的十六进制主题色；无特殊要求时使用柔和粉色 #d982a4",
+                    "theme_mode|色调模式|choice|根据环境选择日间、柔和或夜间配色|light=日间,soft=柔和,night=夜间",
+                    "character|角色|text|当前状态所属角色的姓名或称呼",
+                    "outfit_top|上装|text|当前上装与穿着状态",
+                    "outfit_bottom|下装|text|当前下装与穿着状态",
+                    "outfit_toy|性玩具|text|当前性玩具；无则写无",
+                    "arousal|性欲|percent|0 到 100 的整数",
+                    "depravity|堕落值|percent|0 到 100 的整数",
+                    "depravity_level|堕落等级|number|当前堕落等级",
+                    "total_exposure|总暴露值|number|当前总暴露值",
+                    "womb_semen|宫内精液|text|当前宫内精液量或状态",
+                    "anal_semen|肛门精液|text|当前肛门精液量或状态",
+                    "arousal_fluid|淫水数量|text|当前淫水数量或状态",
+                    "external_semen|外部痕迹|text|外部精液痕迹；无则写无"
+                ],
+                "empty_value": "未记录",
+                "template_file": "sub_html_panels/角色状态总览.html",
+                "html_template": "",
+                "__template_key": "character_overview"
+            },
+            {
+                "enabled": false,
+                "name": "私密经验记录",
+                "panel_id": "intimacy_record",
+                "description": "记录角色的私密经验次数与四个主要身体部位的文字状态。仅保留经验统计，不包含圣性、妊娠、露出抗性和孩子数量。",
+                "output_mode": "when_relevant",
+                "fields": [
+                    "theme_color|主色调|color|可选的十六进制主题色；无特殊要求时使用粉紫色 #df4f91",
+                    "character|角色|text|当前状态所属角色的姓名或称呼",
+                    "corruption_level|淫乱等级|number|顶部概览中的等级数值",
+                    "corruption_exp|淫欲经验|number|顶部概览中的经验数值",
+                    "virginity|贞操|text|当前贞操状态",
+                    "partner_count|经历人数|number|有过相关经历的人数",
+                    "masturbation_count|自慰经验|number|自慰经验次数",
+                    "service_count|性相关服务|number|性相关服务次数",
+                    "anal_count|肛交经验|number|肛交经验次数",
+                    "prostitution_count|卖春经验|number|卖春经验次数",
+                    "shame_count|羞耻经验|number|羞耻经验次数",
+                    "intercourse_count|性交经验|number|性交经验次数",
+                    "creampie_count|浴精经验|number|浴精经验次数",
+                    "group_count|乱交经验|number|乱交经验次数",
+                    "mouth_state|口部|text|口部外观、状态或敏感度的简短文字描述",
+                    "chest_state|胸部|text|胸部外观、状态或敏感度的简短文字描述",
+                    "intimate_state|私处|text|私处外观、状态或敏感度的简短文字描述",
+                    "hips_state|臀部|text|臀部外观、状态或敏感度的简短文字描述"
+                ],
+                "empty_value": "未记录",
+                "template_file": "sub_html_panels/私密经验记录.html",
+                "html_template": "",
+                "__template_key": "intimacy_record"
+            },
+            {
+                "enabled": false,
+                "name": "甜心猫咪状态面板",
+                "panel_id": "cat_status",
+                "description": "可爱柔和的角色状态面板。仅在需要展示角色短句、心情、好感度或互动提醒时输出；数值应随剧情逐步变化。",
+                "output_mode": "when_relevant",
+                "fields": [
+                    "theme_color|主色调|color|自定义主题色；无特殊要求时填写默认粉色 #f472a8",
+                    "message|此刻想说|text|角色此刻最想说的一句短话",
+                    "mood|心情值|percent|0 到 100 的整数",
+                    "liking|喜欢|percent|0 到 100 的整数",
+                    "reminder_1|提醒一|text|符合角色性格的第一条互动提醒",
+                    "reminder_2|提醒二|text|符合角色性格的第二条互动提醒",
+                    "reminder_3|提醒三|text|符合角色性格的第三条互动提醒",
+                    "reminder_4|提醒四|text|符合角色性格的第四条互动提醒",
+                    "footer_quote|底部寄语|text|一句简短、有角色感的结尾寄语"
+                ],
+                "empty_value": "未记录",
+                "template_file": "sub_html_panels/甜心猫咪状态面板.html",
+                "html_template": "",
+                "__template_key": "cat_status"
+            },
+            {
+                "enabled": false,
+                "name": "幕后心声吐槽面板",
+                "panel_id": "backstage_whisper",
+                "description": "在 <content> 标签之后，必须输出一个幕后吐槽小剧场。小剧场与正文完全隔离，只写 2-4 轮对话。秋青子是用户的专属秘书，温柔但犀利，只称呼用户为“哥哥”，偶尔撒娇并提到蛇娘特征（信子、体温、好冷想要哥哥的体温）。不要在开头写拿茶、点心或零食的动作，直接进入吐槽。优先和正文中的女性角色对话；没有女性角色时才和用户（哥哥）对话；不出现其他男性角色。“哥哥”只能指用户。角色可以抱怨人设、吐槽剧情、跳出角色说真话或向秋青子求助。小剧场不影响正式剧情，不透露用户不知道的隐藏信息；秋青子温柔专业，不批评哥哥，对女性角色可亲密互动，对哥哥可撒娇。输出 content 字段时只写对话文本，不要重复 <details>、<summary> 标签。",
+                "output_mode": "always",
+                "fields": [
+                    "theme_color|主题色|color|允许模型根据主模板、白天或夜间环境选择不刺眼的十六进制颜色；无特殊要求时使用柔和紫色 #8b5cf6",
+                    "theme_mode|色调模式|choice|根据阅读环境选择配色|light=日间,soft=柔和,night=夜间",
+                    "content|吐槽内容|text|直接输出 2-4 轮秋青子与角色（或用户）的对话；不要加 Markdown 代码块，不要重复 details 标签"
+                ],
+                "empty_value": "暂时没有幕后心声",
+                "template_file": "sub_html_panels/幕后心声.html",
+                "html_template": "",
+                "__template_key": "backstage_whisper"
+            },
+            {
+                "enabled": true,
+                "name": "头像对话",
+                "panel_id": "avatar_dialogue",
+                "panel_mode": "inline",
+                "description": "在剧情或普通回复中需要角色说话时使用。标签写在台词应出现的位置；同一回复可以混用多个子模板，也可以重复使用本模板。",
+                "output_mode": "when_relevant",
+                "fields": [
+                    "accent|强调色|color|与当前主模板协调的边框和姓名颜色",
+                    "avatar|头像|image|从 avatars 文件夹选择与角色对应的图片文件名",
+                    "name|角色名|text|当前说话角色的姓名或称呼",
+                    "speech|台词|text|角色说出的内容，不要自行添加引号",
+                    "inner|内心活动|text|可选；角色未说出口的想法，没有则留空"
+                ],
+                "empty_value": "",
+                "template_file": "sub_html_panels/头像对话.html",
+                "html_template": "",
+                "__template_key": "avatar_dialogue"
+            }
+        ]
+    },
     "default_template": {
         "type": "string",
         "description": "默认模板",
         "default": "",
         "hint": "未显式指定模板时优先使用的模板文件名，不填时自动使用第一个可用模板"
     },
+    "template_strategy": {
+        "type": "string",
+        "description": "默认模板选择策略",
+        "default": "fixed",
+        "hint": "渲染时如何挑选默认模板：固定使用默认模板；每次随机 / 轮流切换会在全部模板中选择。用户通过 /切换 设置的个人模板始终优先",
+        "options": [
+            "fixed",
+            "random",
+            "round_robin"
+        ],
+        "enum": [
+            "fixed",
+            "random",
+            "round_robin"
+        ],
+        "labels": [
+            "固定",
+            "每次随机",
+            "轮流切换"
+        ]
+    },
     "render_width": {
         "type": "int",
         "description": "渲染宽度（像素）",
         "default": 600,
-        "hint": "建议范围 400-800"
+        "hint": "建议范围 400-1200；主模板会在视口可用宽度内自动拉伸，避免修改宽度后出现大片留白"
     },
     "render_scale": {
         "type": "int",
@@ -44,7 +740,7 @@
     "dialogue_quote_pattern": {
         "type": "string",
         "description": "对话引号匹配模式",
-        "default": "[\"''銆屻€嶃€庛€忊€溾€濃€樷€橾",
+        "default": "[\"'“”‘’「」『』]",
         "hint": "用于识别中英文单双引号的正则表达式"
     },
     "auto_merge_renders": {
@@ -57,7 +753,7 @@
         "type": "string",
         "description": "合并渲染模板",
         "default": "",
-        "hint": "自动合并渲染时使用的模板文件名，不填时走当前默认模板"
+        "hint": "自动合并渲染时使用的模板文件名，不填时优先沿用同一显式模板，否则走当前默认模板"
     },
     "enable_markdown": {
         "type": "bool",

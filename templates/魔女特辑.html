@@ -1,5 +1,5 @@
 <!--BUILTIN_PROMPT
-优先使用魔女特辑模板，在使用魔女特辑模板时需要注意：
+若使用魔女特辑模板需要注意：
 请务必严格按照以下格式输出：
 1. 开头：写一句符合情境的问候或哲学短句（如"晨光熹微，万物初醒"），并用 <kaitou> 和 </kaitou> 标签包裹。
 2. 正文：正常的回复内容。
@@ -861,9 +861,10 @@ function initializePage() {
 
   /* ==================== 关键修复：在DOM加载后检测kaitou和jiewei ==================== */
   const contentEl = document.getElementById('contentArea');
-  
-  // 等待一小段时间确保内容已完全加载
-  setTimeout(function() {
+
+  // 内容在服务端已替换进 HTML，DOMContentLoaded 时必然就绪，
+  // 直接同步执行，避免 setTimeout 与截图时机产生竞争（截图早于定时器时会丢失问候语/字数）
+  (function() {
     const aiGreeting = contentEl.querySelector('kaitou');
     const aiEnding = contentEl.querySelector('jiewei');
 
@@ -900,7 +901,7 @@ function initializePage() {
     const charCount = rawText.replace(/\s/g, '').length;
     document.getElementById('wordCountText').textContent = `全文共 ${charCount} 字`;
 
-  }, 100); // 延迟100ms确保内容已加载
+  })();
 
   /* ===== 散落装饰 ===== */
   const decoSymbols = [

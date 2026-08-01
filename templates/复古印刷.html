@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@400;700&family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   📰 复古印刷 · The Daily Render
+   老报纸 + 铅字排印 + 油墨质感
+   ============================================================ */
+:root {
+  --w: 520px;
+  --paper: #efe6d2;
+  --paper-hi: #f6efdd;
+  --ink: #211b14;
+  --ink-mid: #4a4034;
+  --ink-pale: #837563;
+  --rule: rgba(33, 27, 20, .8);
+  --rule-soft: rgba(33, 27, 20, .3);
+  --red: #8f2f1e;
+  --font-head: 'IM Fell English', 'Times New Roman', serif;
+  --font-caps: 'Cinzel', 'Times New Roman', serif;
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'SimSun', serif;
+  --font-body: 'Noto Sans SC', 'Noto Sans CJK SC', "Microsoft YaHei", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  padding: 30px;
+  display: inline-block;
+  background: linear-gradient(160deg, #b3a68d, #a2947a 55%, #93866d 100%);
+}
+
+/* ==================== 报纸 ==================== */
+.gazette {
+  width: var(--w);
+  max-width: var(--w);
+  position: relative;
+  background:
+    radial-gradient(340px 240px at 100% 0%, rgba(120, 90, 40, .10), transparent 60%),
+    radial-gradient(300px 220px at 0% 100%, rgba(120, 90, 40, .12), transparent 60%),
+    var(--paper);
+  padding: 22px 26px 20px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .5) inset,
+    0 3px 8px rgba(50, 40, 20, .22),
+    0 20px 44px rgba(50, 40, 20, .38);
+}
+
+/* 老纸噪点 + 油墨斑 */
+.gazette::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* ==================== 报头 ==================== */
+.masthead { text-align: center; position: relative; z-index: 2; }
+
+.mast-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-caps);
+  font-size: 9.5px;
+  letter-spacing: 2px;
+  color: var(--ink-mid);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 4px 2px;
+}
+
+.mast-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 40px;
+  letter-spacing: 10px;
+  padding: 14px 0 6px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, .4);
+}
+.mast-title .fell {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 5px;
+  color: var(--ink-mid);
+  margin-top: 2px;
+}
+
+.mast-rules {
+  border-top: 3.5px double var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-top: 8px;
+  padding: 5px 2px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  letter-spacing: 1.5px;
+  color: var(--ink-mid);
+}
+.mast-rules b { color: var(--red); font-weight: 700; }
+
+/* ==================== 正文 ==================== */
+.body-area { padding: 18px 2px 0; position: relative; z-index: 2; }
+
+.content {
+  font-size: 15px;
+  line-height: 2.0;
+  width: 100%;
+  max-width: 100%;
+  text-align: justify;
+}
+.content, .content * {
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box !important;
+}
+
+.content p { margin-bottom: .9em; text-indent: 2em; }
+.content p:last-child { margin-bottom: 0; }
+
+.content > p:first-child { text-indent: 0; }
+.content > p:first-child::first-letter {
+  float: left;
+  font-family: var(--font-head);
+  font-size: 3.4em;
+  line-height: .82;
+  padding: 6px 8px 0 2px;
+  color: var(--red);
+}
+
+/* ==================== 标题 ==================== */
+.content h1, .content h2, .content h3, .content h4 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--ink);
+  text-indent: 0;
+  line-height: 1.5;
+  margin: 1.2em 0 .6em;
+}
+.content h1 {
+  font-size: 26px;
+  text-align: center;
+  letter-spacing: 4px;
+  padding: 10px 6px;
+  border-top: 3.5px double var(--rule);
+  border-bottom: 3.5px double var(--rule);
+}
+.content h2 {
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 3px;
+  padding-bottom: 6px;
+  position: relative;
+}
+.content h2::after {
+  content: "❧ ❦ ❧";
+  display: block;
+  font-size: 11px;
+  color: var(--red);
+  letter-spacing: 6px;
+  margin-top: 4px;
+}
+.content h3 {
+  font-size: 17px;
+  letter-spacing: 2px;
+  border-left: 4px solid var(--ink);
+  padding-left: 12px;
+}
+.content h4 { font-size: 15.5px; color: var(--red); letter-spacing: 1px; }
+
+/* ==================== 语义标签 ==================== */
+q {
+  display: inline;
+  quotes: none;
+  color: var(--red);
+  font-weight: 700;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+q::before { content: "『"; color: var(--ink-mid); }
+q::after  { content: "』"; color: var(--ink-mid); }
+
+inner {
+  display: inline;
+  color: var(--ink-pale);
+  font-style: italic;
+  font-size: .93em;
+  padding: 0 3px;
+}
+inner::before { content: "（按："; opacity: .75; font-style: normal; font-size: .9em; }
+inner::after  { content: "）"; opacity: .75; font-style: normal; }
+
+act {
+  display: inline;
+  color: var(--ink);
+  font-weight: 700;
+  padding: 0 3px;
+  background: linear-gradient(transparent 65%, rgba(143, 47, 30, .22) 65%);
+}
+
+scene {
+  display: block;
+  margin: 1.3em 0;
+  padding: 13px 16px;
+  text-indent: 0;
+  font-size: .95em;
+  color: var(--ink-mid);
+  border: 1px solid var(--rule-soft);
+  outline: 1px solid var(--rule-soft);
+  outline-offset: 3px;
+  background: var(--paper-hi);
+  position: relative;
+}
+scene::before {
+  content: "◈ 现场速写";
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  color: var(--red);
+  background: var(--paper);
+  padding: 0 8px;
+  font-weight: 700;
+}
+
+aside {
+  display: block;
+  width: fit-content;
+  max-width: 88%;
+  margin: 1.3em auto;
+  text-align: center;
+  text-indent: 0;
+  font-size: .92em;
+  letter-spacing: 3px;
+  color: var(--ink-mid);
+  padding: 6px 4px;
+  border-top: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+}
+aside::before { content: "❦ "; color: var(--red); }
+aside::after  { content: " ❦"; color: var(--red); }
+
+/* ==================== 常规元素 ==================== */
+.content blockquote {
+  margin: 1.2em .6em;
+  padding: 12px 16px;
+  text-indent: 0;
+  font-style: italic;
+  color: var(--ink-mid);
+  border-left: 4px solid var(--red);
+  background: rgba(143, 47, 30, .05);
+}
+.content blockquote p { text-indent: 0; margin-bottom: .4em; }
+.content blockquote p:last-child { margin-bottom: 0; }
+
+.content ul, .content ol { margin: .9em 0 .9em 1.6em; padding-left: .4em; text-indent: 0; }
+.content li { margin-bottom: .4em; }
+.content ul li::marker { color: var(--red); content: "▪ "; }
+.content ol li::marker { color: var(--ink); font-weight: 700; }
+
+.content hr {
+  border: none;
+  height: 14px;
+  margin: 1.3em 0;
+  position: relative;
+  background: none;
+}
+.content hr::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 6px;
+  border-top: 3.5px double rgba(33, 27, 20, .55);
+}
+
+.content code {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: .9em;
+  color: var(--ink);
+  background: rgba(33, 27, 20, .07);
+  border: 1px solid var(--rule-soft);
+  border-radius: 2px;
+  padding: 1px 6px;
+  white-space: pre-wrap !important;
+}
+.content pre {
+  margin: 1.1em 0;
+  padding: 14px 16px;
+  background: var(--paper-hi);
+  border: 1px solid var(--rule-soft);
+  outline: 1px solid var(--rule-soft);
+  outline-offset: 3px;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  text-indent: 0;
+  font-family: 'Courier New', Consolas, monospace;
+  color: var(--ink-mid);
+}
+.content pre code { background: none; border: none; padding: 0; color: inherit; }
+
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2em 0;
+  font-size: .92em;
+  table-layout: fixed;
+  text-indent: 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.content th, .content td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.content th {
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-bottom: 1.5px solid var(--ink);
+  background: rgba(33, 27, 20, .05);
+}
+.content tr:nth-child(even) td { background: rgba(33, 27, 20, .03); }
+
+.content strong { color: var(--red); font-weight: 700; }
+.content em { font-style: italic; color: var(--ink-mid); }
+.content del { color: var(--ink-pale); }
+.content a { color: var(--red); text-decoration: underline; text-underline-offset: 3px; }
+.content img {
+  max-width: 100%;
+  height: auto;
+  margin: .5em 0;
+  border: 1px solid var(--rule-soft);
+  padding: 4px;
+  background: var(--paper-hi);
+  filter: sepia(.3) contrast(.95);
+}
+
+.content details {
+  margin: 1.1em 0;
+  border: 1px solid var(--rule-soft);
+  background: var(--paper-hi);
+  text-indent: 0;
+}
+.content summary {
+  padding: 9px 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: rgba(33, 27, 20, .06);
+  border-bottom: 1px solid var(--rule-soft);
+  cursor: pointer;
+}
+.content summary::before { content: "◪ "; color: var(--red); }
+.content details > *:not(summary) { padding: 10px 14px; text-indent: 0; }
+
+/* ==================== 报尾 ==================== */
+.colophon {
+  margin-top: 20px;
+  border-top: 3.5px double var(--rule);
+  padding-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9.5px;
+  letter-spacing: 2px;
+  color: var(--ink-pale);
+  position: relative;
+  z-index: 2;
+}
+.colophon .caps { font-family: var(--font-caps); }
+.colophon .barcode {
+  display: inline-block;
+  height: 16px;
+  width: 74px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 1.5px, transparent 1.5px 3.5px,
+    var(--ink) 3.5px 6px, transparent 6px 7px,
+    var(--ink) 7px 8px, transparent 8px 11px
+  );
+  opacity: .75;
+}
+</style>
+</head>
+<body>
+<div class="gazette">
+  <div class="masthead">
+    <div class="mast-top">
+      <span>VOL. MMXXVI</span>
+      <span>EST. 1926</span>
+      <span>PRICE · TWO PENCE</span>
+    </div>
+    <div class="mast-title">晨间画报<span class="fell">THE DAILY RENDER — FINEST NEWS IN PRINT</span></div>
+    <div class="mast-rules">
+      <span>{{date}} · {{weekday}}</span>
+      <span><b>特别版</b></span>
+      <span>晴 · 宜读报</span>
+    </div>
+  </div>
+
+  <div class="body-area">
+    <div class="content">{{content}}</div>
+  </div>
+
+  <div class="colophon">
+    <span class="caps">PRINTED BY ASTRBOT PRESS</span>
+    <span class="barcode"></span>
+    <span>零售 · 概不赊账</span>
+  </div>
+</div>
+</body>
+</html>

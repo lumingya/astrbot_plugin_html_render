@@ -1,6 +1,4 @@
 <!--BUILTIN_PROMPT
-优先使用奶油蝴蝶结模板。
-
 这个模板适合甜美、温柔、少女心、日记感、陪伴感、轻小说片段这类内容。
 普通正文直接写即可，不需要所有文字都包标签。
 
@@ -72,7 +70,7 @@
     }
 
     body {
-      padding: 34px;
+      padding: 26px;
       display: inline-block;
       color: var(--ink);
       font-family: var(--font-body);
@@ -84,7 +82,7 @@
     }
 
     .frame {
-      width: var(--page-width);
+      width: min(var(--page-width), calc(100vw - 52px));
       max-width: var(--page-width);
       position: relative;
       padding: 14px;

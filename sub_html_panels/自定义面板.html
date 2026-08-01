@@ -1,0 +1,61 @@
+<style>
+.custom-sub-panel {
+  width: 100%;
+  margin: 14px 0;
+  padding: 16px 18px;
+  color: #252525;
+  background: #f7f7f5;
+  border: 1px solid #c9c9c4;
+  border-radius: 6px;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.custom-sub-panel .custom-sub-panel__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.custom-sub-panel .custom-sub-panel__row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #deded9;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.custom-sub-panel .custom-sub-panel__label {
+  color: #777771;
+}
+
+.custom-sub-panel .custom-sub-panel__value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.custom-sub-panel .custom-sub-panel__track {
+  height: 3px;
+  margin-top: 7px;
+  background: #d9d9d3;
+}
+
+.custom-sub-panel .custom-sub-panel__fill {
+  display: block;
+  width: var(--custom-progress);
+  height: 100%;
+  background: #4d6b62;
+}
+</style>
+
+<section class="custom-sub-panel" aria-label="{{panel_name}}">
+  <h2 class="custom-sub-panel__title">{{value:name}}</h2>
+  <div class="custom-sub-panel__row">
+    <span class="custom-sub-panel__label">进度</span>
+    <span class="custom-sub-panel__value">
+      {{value:progress}} / 100
+      <span class="custom-sub-panel__track"><span class="custom-sub-panel__fill" style="--custom-progress: {{percent:progress}}%"></span></span>
+    </span>
+  </div>
+</section>
