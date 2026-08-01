@@ -15,4 +15,12 @@ Thumbs.db
 .idea/
 # Git 提交脚本（不需要提交）
 git提交.py
-git提交.py
+
+# R18 相关的子模板
+sub_html_panels/R18沉浸状态栏.html
+sub_html_panels/私密经验记录.html
+sub_html_panels/角色状态总览.html
+
+# 本地数据与缓存
+data/html_render_cache/
+data/cmd_config.json

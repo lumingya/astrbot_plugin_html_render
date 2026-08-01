@@ -424,6 +424,10 @@ def main() -> int:
     from sub_html_panels import SubHtmlPanelManager
 
     panel_items = schema["sub_html_panels"]["default"]
+    # 临时在内存中开启 r18_status 以便进行测试
+    for item in panel_items:
+        if item.get("panel_id") == "r18_status":
+            item["enabled"] = True
     panel_mgr = SubHtmlPanelManager(str(REPO_ROOT))
     panel_mgr.reload(panel_items)
     enabled_panels = panel_mgr.get_enabled_panels()

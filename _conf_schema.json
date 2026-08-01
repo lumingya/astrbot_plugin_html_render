@@ -330,14 +330,11 @@
                         "default": [
                             "theme_color|主色调|color|按当前情境选择不刺眼的十六进制主题色；无特殊要求时使用柔和粉色 #d982a4",
                             "theme_mode|色调模式|choice|根据环境选择日间、柔和或夜间配色|light=日间,soft=柔和,night=夜间",
-                            "character|角色|text|当前状态所属角色的姓名或称呼",
                             "outfit_top|上装|text|当前上装与穿着状态",
                             "outfit_bottom|下装|text|当前下装与穿着状态",
                             "outfit_toy|性玩具|text|当前性玩具；无则写无",
                             "arousal|性欲|percent|0 到 100 的整数",
                             "depravity|堕落值|percent|0 到 100 的整数",
-                            "depravity_level|堕落等级|number|当前堕落等级",
-                            "total_exposure|总暴露值|number|当前总暴露值",
                             "womb_semen|宫内精液|text|当前宫内精液量或状态",
                             "anal_semen|肛门精液|text|当前肛门精液量或状态",
                             "arousal_fluid|淫水数量|text|当前淫水数量或状态",
@@ -541,7 +538,7 @@
         },
         "default": [
             {
-                "enabled": true,
+                "enabled": false,
                 "name": "R18 沉浸状态栏",
                 "panel_id": "r18_status",
                 "description": "成人角色扮演场景的私密状态记录。根据当前剧情如实填写身体状态、关系与目标；没有变化时沿用上下文中的最近状态，不要凭空制造突变。",
@@ -578,14 +575,11 @@
                 "fields": [
                     "theme_color|主色调|color|按当前情境选择不刺眼的十六进制主题色；无特殊要求时使用柔和粉色 #d982a4",
                     "theme_mode|色调模式|choice|根据环境选择日间、柔和或夜间配色|light=日间,soft=柔和,night=夜间",
-                    "character|角色|text|当前状态所属角色的姓名或称呼",
                     "outfit_top|上装|text|当前上装与穿着状态",
                     "outfit_bottom|下装|text|当前下装与穿着状态",
                     "outfit_toy|性玩具|text|当前性玩具；无则写无",
                     "arousal|性欲|percent|0 到 100 的整数",
                     "depravity|堕落值|percent|0 到 100 的整数",
-                    "depravity_level|堕落等级|number|当前堕落等级",
-                    "total_exposure|总暴露值|number|当前总暴露值",
                     "womb_semen|宫内精液|text|当前宫内精液量或状态",
                     "anal_semen|肛门精液|text|当前肛门精液量或状态",
                     "arousal_fluid|淫水数量|text|当前淫水数量或状态",
